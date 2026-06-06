@@ -104,9 +104,11 @@ export default function App() {
         <AdminDashboard user={user} />
       )}
 
-      <footer className="muted footer">
-        Only you and Mr Wetherell can download your files.
-      </footer>
+      {showStudentView && (
+        <footer className="muted footer">
+          Only you and Mr Wetherell can download your files.
+        </footer>
+      )}
     </div>
   );
 }
