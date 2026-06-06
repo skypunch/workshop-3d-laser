@@ -57,8 +57,7 @@ export default function App() {
         <div className="brand">
           <span className="logo">⚙︎</span>
           <div>
-            <h1>Fab Lab Queue</h1>
-            <p className="muted">3D printing &amp; laser cutting</p>
+            <h1>Workshop 3D Print and Laser Cut Queue</h1>
           </div>
         </div>
         {user && (

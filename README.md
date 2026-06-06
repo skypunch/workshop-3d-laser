@@ -1,4 +1,4 @@
-# Fab Lab Queue
+# Workshop 3D Print and Laser Cut Queue
 
 A virtual queue for **3D printing** and **laser cutting**. Students sign in with their
 school Google account, upload an `.stl` or `.svg`, and join the queue. Lab staff (you)
