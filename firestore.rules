@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// These rules govern the "jobs" queue data (NOT the files — see storage.rules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── EDIT THESE TWO to match src/config.js ────────────────────────────────
+    function schoolDomain() { return "yourschool.edu"; }
+    function adminEmails()  { return ["you@yourschool.edu"]; }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function signedIn() { return request.auth != null; }
+    function email()    { return request.auth.token.email.lower(); }
+
+    // Google verifies the email, so checking the domain here is trustworthy.
+    function isSchool() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && email().split('@')[1] == schoolDomain().lower();
+    }
+    function isAdmin() { return signedIn() && email() in adminEmails(); }
+
+    match /jobs/{jobId} {
+      // Any signed-in school user can see the queue (positions, names, statuses).
+      allow read: if isSchool();
+
+      // A user may only create a job for themselves, starting as "queued".
+      allow create: if isSchool()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail.lower() == email()
+        && request.resource.data.status == 'queued';
+
+      // Only admins change a job (e.g. mark in-progress/done).
+      allow update: if isAdmin();
+
+      // Admins can delete anything; users can cancel (delete) their own job.
+      allow delete: if isAdmin() || (isSchool() && resource.data.ownerUid == request.auth.uid);
+    }
+  }
+}

@@ -1,0 +1,130 @@
+import { useEffect, useMemo, useState } from "react";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import { ref, getDownloadURL, deleteObject } from "firebase/storage";
+import { db, storage } from "../firebase";
+import { STATUSES, STATUS_LABELS } from "../config";
+
+export default function AdminDashboard() {
+  const [jobs, setJobs] = useState([]);
+  const [filter, setFilter] = useState("active"); // active | all | queued | in_progress | done | rejected
+
+  useEffect(() => {
+    const q = query(collection(db, "jobs"), orderBy("createdAt", "asc"));
+    return onSnapshot(q, (snap) => {
+      setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, []);
+
+  const visible = useMemo(() => {
+    if (filter === "all") return jobs;
+    if (filter === "active") return jobs.filter((j) => j.status === "queued" || j.status === "in_progress");
+    return jobs.filter((j) => j.status === filter);
+  }, [jobs, filter]);
+
+  async function setStatus(job, status) {
+    await updateDoc(doc(db, "jobs", job.id), { status });
+  }
+
+  async function download(job) {
+    try {
+      const url = await getDownloadURL(ref(storage, job.filePath));
+      window.open(url, "_blank", "noopener");
+    } catch (e) {
+      alert(e?.message || "Could not get the file.");
+    }
+  }
+
+  async function remove(job) {
+    if (!confirm(`Delete "${job.title}" by ${job.ownerName}? This also deletes the file.`)) return;
+    try {
+      await deleteDoc(doc(db, "jobs", job.id));
+      if (job.filePath) await deleteObject(ref(storage, job.filePath)).catch(() => {});
+    } catch (e) {
+      alert(e?.message || "Could not delete this job.");
+    }
+  }
+
+  const counts = useMemo(() => {
+    const c = { queued: 0, in_progress: 0, done: 0, rejected: 0 };
+    jobs.forEach((j) => (c[j.status] = (c[j.status] || 0) + 1));
+    return c;
+  }, [jobs]);
+
+  return (
+    <main className="stack">
+      <section className="card">
+        <h2>Admin dashboard</h2>
+        <div className="muted small">
+          Queued: {counts.queued} · In progress: {counts.in_progress} · Done: {counts.done} · Rejected:{" "}
+          {counts.rejected}
+        </div>
+        <div className="filters">
+          {["active", "all", ...STATUSES].map((f) => (
+            <button
+              key={f}
+              className={`chip ${filter === f ? "on" : ""}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === "active" ? "Active" : f === "all" ? "All" : STATUS_LABELS[f]}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        {visible.length === 0 ? (
+          <p className="muted">Nothing here.</p>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Requester</th>
+                <th>Notes</th>
+                <th>File</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((j) => (
+                <tr key={j.id} className={`status-row-${j.status}`}>
+                  <td>{j.title}</td>
+                  <td>
+                    <span className="tag">{j.type}</span>
+                  </td>
+                  <td className="small">
+                    {j.ownerName}
+                    <br />
+                    <span className="muted">{j.ownerEmail}</span>
+                  </td>
+                  <td className="small notes">{j.notes || <span className="muted">—</span>}</td>
+                  <td>
+                    <button className="btn ghost small" onClick={() => download(j)}>
+                      ⬇ {j.fileName}
+                    </button>
+                  </td>
+                  <td>
+                    <select value={j.status} onChange={(e) => setStatus(j, e.target.value)}>
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_LABELS[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <button className="btn ghost small danger" onClick={() => remove(j)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </main>
+  );
+}

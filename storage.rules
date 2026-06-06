@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// These rules govern the uploaded .stl / .svg files.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── EDIT THESE TWO to match src/config.js (keep them lowercase) ──────────
+    function schoolDomain() { return "yourschool.edu"; }
+    function adminEmails()  { return ["you@yourschool.edu"]; }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function signedIn() { return request.auth != null; }
+    function email()    { return request.auth.token.email.lower(); }
+    function isSchool() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && email().split('@')[1] == schoolDomain();
+    }
+    function isAdmin() { return signedIn() && email() in adminEmails(); }
+
+    // Files live at uploads/{the uploader's uid}/{filename}.
+    match /uploads/{userId}/{fileName} {
+      // Only the file's owner or an admin can download it.
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+
+      // Only the owner (a verified school account) may upload, max 50 MB.
+      allow write: if isSchool()
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024;
+
+      // Owner or admin may delete (used when a job is cancelled/removed).
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == userId);
+    }
+  }
+}
