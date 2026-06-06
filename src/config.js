@@ -16,11 +16,11 @@ export const ADMIN_EMAILS = ["marcus.wetherell@etonhouse.edu.sg"];
 // Which queue a file goes into is decided by its extension.
 export const TYPE_BY_EXTENSION = {
   ".stl": "3D Printing",
-  ".svg": "Laser Cutter",
+  ".svg": "Laser Cutting",
 };
 
 // Display order of the two queues.
-export const JOB_TYPES = ["3D Printing", "Laser Cutter"];
+export const JOB_TYPES = ["3D Printing", "Laser Cutting"];
 export const ACCEPTED_EXTENSIONS = Object.keys(TYPE_BY_EXTENSION);
 export const MAX_FILE_MB = 50;
 
@@ -38,6 +38,31 @@ export const STATUS_LABELS = {
   done: "Done",
   rejected: "Rejected",
 };
+
+// Best-effort first name from a display name (or email if no name is set).
+export function firstName(name) {
+  let s = (name || "").trim();
+  if (!s) return "Someone";
+  if (s.includes("@")) {
+    s = s.split("@")[0].split(/[._-]/)[0]; // e.g. "marcus.wetherell@…" → "marcus"
+  } else {
+    s = s.split(/\s+/)[0];
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Given jobs ordered oldest-first, returns { [jobId]: label } where each
+// person's first job is "Marcus", their second "Marcus 2", and so on.
+export function labelJobs(rows) {
+  const countByOwner = {};
+  const labels = {};
+  for (const j of rows) {
+    countByOwner[j.ownerUid] = (countByOwner[j.ownerUid] || 0) + 1;
+    const n = countByOwner[j.ownerUid];
+    labels[j.id] = n === 1 ? firstName(j.ownerName) : `${firstName(j.ownerName)} ${n}`;
+  }
+  return labels;
+}
 
 export function isSchoolEmail(email) {
   return typeof email === "string" && email.toLowerCase().endsWith("@" + SCHOOL_DOMAIN.toLowerCase());

@@ -55,9 +55,8 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="logo">⚙︎</span>
           <div>
-            <h1>Workshop 3D Print and Laser Cut Queue</h1>
+            <h1>Workshop 3D Printing and Laser Cutting Queue</h1>
           </div>
         </div>
         {user && (
@@ -91,7 +90,7 @@ export default function App() {
       )}
 
       <footer className="muted footer">
-        Files are private — only you and the lab staff can download them.
+        Only you and Mr Wetherell can download your files.
       </footer>
     </div>
   );

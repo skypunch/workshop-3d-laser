@@ -1,29 +1,35 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { ACCEPTED_EXTENSIONS, MAX_FILE_MB, typeForFile } from "../config";
 
 export default function JoinForm({ user }) {
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-  const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [doneMsg, setDoneMsg] = useState("");
+  const fileInputRef = useRef(null);
 
-  // The queue is decided by the file's extension (.stl → 3D Printing, .svg → Laser Cutter).
-  const detectedType = file ? typeForFile(file.name) : null;
+  function clearInput() {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  // Runs the moment a file is chosen — uploads and joins the right queue automatically.
+  async function submitJob(file) {
     setError("");
+    setDoneMsg("");
 
-    if (!file) return setError("Please choose a file to upload.");
-    const type = typeForFile(file.name);
-    if (!type) return setError(`File must be one of: ${ACCEPTED_EXTENSIONS.join(", ")}`);
-    if (file.size > MAX_FILE_MB * 1024 * 1024) return setError(`File must be under ${MAX_FILE_MB} MB.`);
-    if (!title.trim()) return setError("Please give your job a short title.");
+    const type = typeForFile(file.name); // .stl → 3D Printing, .svg → Laser Cutter
+    if (!type) {
+      setError(`File must be one of: ${ACCEPTED_EXTENSIONS.join(", ")}`);
+      clearInput();
+      return;
+    }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      setError(`File must be under ${MAX_FILE_MB} MB.`);
+      clearInput();
+      return;
+    }
 
     setBusy(true);
     try {
@@ -43,84 +49,61 @@ export default function JoinForm({ user }) {
         ownerEmail: user.email,
         ownerName: user.displayName || user.email,
         type, // auto-detected from the extension
-        title: title.trim(),
-        notes: notes.trim(),
+        notes: "", // students can add notes from the queue afterwards
         fileName: file.name,
         filePath: path,
         status: "queued",
         createdAt: serverTimestamp(),
       });
 
-      setTitle("");
-      setNotes("");
-      setFile(null);
-      e.target.reset();
-      setDone(true);
-      setTimeout(() => setDone(false), 4000);
+      setDoneMsg(`Added to the ${type} queue! 🎉`);
+      setTimeout(() => setDoneMsg(""), 4000);
     } catch (err) {
       setError(err?.message || "Something went wrong submitting your job.");
     } finally {
       setBusy(false);
+      clearInput();
     }
+  }
+
+  function handleFileChange(e) {
+    const f = e.target.files?.[0];
+    if (f) submitJob(f);
   }
 
   return (
     <section className="card">
-      <h2>Join the queue</h2>
-      <form onSubmit={handleSubmit} className="form">
-        <label>
-          Title
-          <input
-            type="text"
-            value={title}
-            placeholder="e.g. Keychain prototype"
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={80}
-          />
+      <div className="form">
+        <input
+          ref={fileInputRef}
+          id="queue-file-input"
+          type="file"
+          accept={ACCEPTED_EXTENSIONS.join(",")}
+          onChange={handleFileChange}
+          disabled={busy}
+          className="visually-hidden"
+        />
+        <label htmlFor="queue-file-input" className={`upload-btn ${busy ? "disabled" : ""}`}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 16V4" />
+            <path d="m6 10 6-6 6 6" />
+            <path d="M4 20h16" />
+          </svg>
+          {busy ? "Uploading…" : "Upload a file for printing or cutting"}
         </label>
-
-        <label>
-          Notes for the lab (optional)
-          <textarea
-            value={notes}
-            placeholder="Material, color, infill, quantity, anything we should know…"
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            maxLength={500}
-          />
-        </label>
-
-        <label>
-          File
-          <input
-            type="file"
-            accept={ACCEPTED_EXTENSIONS.join(",")}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-          <span className="muted small">
-            Upload a <strong>.stl</strong> for 3D Printing or a <strong>.svg</strong> for the
-            Laser Cutter — the right queue is chosen automatically. Max {MAX_FILE_MB} MB.
-          </span>
-        </label>
-
-        {file && detectedType && (
-          <div className="banner info">
-            This will join the <strong>{detectedType}</strong> queue.
-          </div>
-        )}
-        {file && !detectedType && (
-          <div className="banner error">
-            Unsupported file type — please choose a .stl or .svg file.
-          </div>
-        )}
+        <span className="muted small upload-hint">Maximum {MAX_FILE_MB} MB</span>
 
         {error && <div className="banner error">{error}</div>}
-        {done && <div className="banner success">Added to the queue! 🎉</div>}
-
-        <button className="btn primary" type="submit" disabled={busy}>
-          {busy ? "Uploading…" : "Add to queue"}
-        </button>
-      </form>
+        {doneMsg && <div className="banner success">{doneMsg}</div>}
+      </div>
     </section>
   );
 }

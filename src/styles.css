@@ -14,6 +14,8 @@
 
 * { box-sizing: border-box; }
 
+html, body { overflow-x: hidden; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -21,7 +23,13 @@ body {
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.app { max-width: 960px; margin: 0 auto; padding: 16px; }
+.app { max-width: 1160px; margin: 0 auto; padding: 16px; }
+
+/* The two queues side by side (stacks on narrow screens).
+   minmax(0, 1fr) lets columns shrink so long filenames truncate instead of
+   forcing the grid wider than the window. */
+.queues-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 720px) { .queues-grid { grid-template-columns: 1fr; } }
 
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -61,6 +69,28 @@ body {
 .form input[type="file"] { padding: 8px; }
 .form textarea { resize: vertical; }
 
+/* Hidden native file input, triggered by the big green button below */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* .form .upload-btn (not just .upload-btn) so it beats the generic ".form label"
+   muted-grey color rule. */
+.form .upload-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  background: linear-gradient(180deg, #1aa653, #0e8a43);
+  color: #ffffff; font-weight: 700; font-size: 17px;
+  padding: 18px 22px; border-radius: 16px; cursor: pointer;
+  border: 1px solid transparent; transition: filter .12s ease, transform .04s ease;
+}
+.upload-btn:hover { filter: brightness(1.06); }
+.upload-btn:active { transform: translateY(1px); }
+.upload-btn svg { width: 24px; height: 24px; }
+/* Keyboard focus ring (label is focusable via the input) */
+#queue-file-input:focus-visible + .upload-btn { outline: 3px solid rgba(46,204,113,.5); outline-offset: 2px; }
+.upload-btn.disabled { opacity: .65; pointer-events: none; }
+.upload-hint { text-align: center; }
+
 .btn {
   appearance: none; border: 1px solid var(--border); background: var(--card-2); color: var(--text);
   padding: 10px 16px; border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer;
@@ -83,15 +113,22 @@ body {
 .signin h2 { margin-bottom: 6px; }
 .signin .btn { margin-top: 16px; }
 
+/* Queue title with inline "N IN QUEUE" count */
+.queue-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.queue-head h2 { margin: 0; }
+.queue-count { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+
 .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .queue-row {
-  display: flex; align-items: center; gap: 14px;
+  display: flex; flex-direction: column; gap: 10px;
   background: var(--card-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
 }
 .queue-row.mine { border-color: var(--primary); }
+.row-main { display: flex; align-items: center; gap: 14px; }
 .queue-row .pos { font-weight: 700; color: var(--muted); min-width: 36px; }
 .queue-row .grow, .grow { flex: 1; min-width: 0; }
 .line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filename { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tag {
   font-size: 11px; background: var(--card); border: 1px solid var(--border);
@@ -102,6 +139,30 @@ body {
 .status-in_progress { background: rgba(245,166,35,.15); color: #ffd28a; }
 .status-done { background: rgba(46,204,113,.15); color: #9be7bf; }
 .status-rejected { background: rgba(255,91,91,.15); color: #ffb4b4; }
+
+/* Clickable NOTES / DELETE pills — same shape as a status pill */
+.notes-toggle, .delete-pill {
+  font: inherit; font-size: 11px; letter-spacing: .03em; text-transform: uppercase;
+  cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+  padding: 2px 8px; border-radius: 999px;
+}
+.notes-toggle:hover { border-color: var(--primary); color: var(--text); }
+.notes-toggle.has-notes { color: var(--warn); border-color: rgba(245,166,35,.45); }
+.notes-toggle.open { background: var(--card); color: var(--text); border-color: var(--primary); }
+.delete-pill:hover { border-color: var(--danger); color: var(--danger); }
+
+/* Right-aligned NOTES + DELETE cluster */
+.row-actions { display: flex; align-items: center; gap: 8px; }
+
+.notes-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+}
+.notes-panel textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font: inherit; resize: vertical;
+}
+.notes-panel p { margin: 0; white-space: pre-wrap; }
+.notes-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
 
 .filters, .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip {

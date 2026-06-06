@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUSES, STATUS_LABELS } from "../config";
+import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   }
 
   async function remove(job) {
-    if (!confirm(`Delete "${job.title}" by ${job.ownerName}? This also deletes the file.`)) return;
+    if (!confirm(`Delete "${job.title || job.fileName}" by ${job.ownerName}? This also deletes the file.`)) return;
     try {
       await deleteDoc(doc(db, "jobs", job.id));
       if (job.filePath) await deleteObject(ref(storage, job.filePath)).catch(() => {});
@@ -78,6 +78,7 @@ export default function AdminDashboard() {
 
       {JOB_TYPES.map((type) => {
         const rows = visible.filter((j) => j.type === type);
+        const labels = labelJobs(rows);
         return (
           <section className="card" key={type}>
             <h2>
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Title</th>
+                    <th>Job</th>
                     <th>Requester</th>
                     <th>Notes</th>
                     <th>File</th>
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {rows.map((j) => (
                     <tr key={j.id} className={`status-row-${j.status}`}>
-                      <td>{j.title}</td>
+                      <td><strong>{labels[j.id]}</strong></td>
                       <td className="small">
                         {j.ownerName}
                         <br />

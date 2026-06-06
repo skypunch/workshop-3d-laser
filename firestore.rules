@@ -30,8 +30,12 @@ service cloud.firestore {
         && request.resource.data.ownerEmail.lower() == email()
         && request.resource.data.status == 'queued';
 
-      // Only admins change a job (e.g. mark in-progress/done).
-      allow update: if isAdmin();
+      // Admins can change anything (e.g. status). The owner may edit ONLY the
+      // "notes" field on their own job — nothing else.
+      allow update: if isAdmin()
+        || (isSchool()
+            && resource.data.ownerUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']));
 
       // Admins can delete anything; users can cancel (delete) their own job.
       allow delete: if isAdmin() || (isSchool() && resource.data.ownerUid == request.auth.uid);
