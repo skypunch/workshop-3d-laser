@@ -69,7 +69,8 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {JOB_TYPES.map((type) => {
+      <div className="queues-grid">
+        {JOB_TYPES.map((type) => {
         const rows = visible.filter((j) => j.type === type);
         const labels = labelJobs(rows);
         const activeCount = counts[type].queued + counts[type].in_progress;
@@ -129,7 +130,8 @@ export default function AdminDashboard() {
             )}
           </section>
         );
-      })}
+        })}
+      </div>
     </main>
   );
 }
