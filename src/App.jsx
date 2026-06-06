@@ -10,6 +10,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewAsStudent, setViewAsStudent] = useState(false); // admins can preview the student view
 
   useEffect(() => {
     // Failsafe: never sit on "Loading…" forever if the auth check is slow —
@@ -51,6 +52,9 @@ export default function App() {
     return <div className="centered muted">Loading…</div>;
   }
 
+  const isAdmin = !!user && isAdminEmail(user.email);
+  const showStudentView = !!user && (!isAdmin || viewAsStudent);
+
   return (
     <div className="app">
       <header className="topbar">
@@ -62,7 +66,12 @@ export default function App() {
         {user && (
           <div className="userbox">
             <span className="muted">{user.displayName || user.email}</span>
-            {isAdminEmail(user.email) && <span className="badge">admin</span>}
+            {isAdmin && <span className="badge">admin</span>}
+            {isAdmin && (
+              <button className="btn ghost small" onClick={() => setViewAsStudent((v) => !v)}>
+                {viewAsStudent ? "Back to admin" : "View as student"}
+              </button>
+            )}
             <button className="btn ghost" onClick={() => signOut(auth)}>
               Sign out
             </button>
@@ -80,13 +89,19 @@ export default function App() {
             Sign in with Google
           </button>
         </div>
-      ) : isAdminEmail(user.email) ? (
-        <AdminDashboard user={user} />
-      ) : (
+      ) : showStudentView ? (
         <main className="stack">
+          {isAdmin && (
+            <div className="banner info">
+              👁 Previewing the student view — use “Back to admin” (top right) to return.
+              Anything you upload here goes into the real queue.
+            </div>
+          )}
           <JoinForm user={user} />
           <QueueList user={user} />
         </main>
+      ) : (
+        <AdminDashboard user={user} />
       )}
 
       <footer className="muted footer">
