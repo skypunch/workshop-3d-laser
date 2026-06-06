@@ -1,7 +1,5 @@
 // ┌──────────────────────────────────────────────────────────────────────────┐
-// │  Paste your Firebase web config here.                                      │
-// │  Firebase Console → Project settings (gear icon) → "Your apps" → Web app   │
-// │  → "SDK setup and configuration" → Config. Copy the object it shows.       │
+// │  Firebase web config for the "workshop-3d-laser" project.                  │
 // │                                                                            │
 // │  IMPORTANT: these values are NOT secret. A Firebase web "apiKey" is just   │
 // │  a public project identifier — it is safe to commit to a public repo.      │
@@ -10,10 +8,10 @@
 // └──────────────────────────────────────────────────────────────────────────┘
 
 export const firebaseConfig = {
-  apiKey: "PASTE_ME",
-  authDomain: "PASTE_ME",
-  projectId: "PASTE_ME",
-  storageBucket: "PASTE_ME",
-  messagingSenderId: "PASTE_ME",
-  appId: "PASTE_ME",
+  apiKey: "AIzaSyCD2-vKhydlBZhlIbC4d_d5XmodLi47A7w",
+  authDomain: "workshop-3d-laser-cefeb.firebaseapp.com",
+  projectId: "workshop-3d-laser-cefeb",
+  storageBucket: "workshop-3d-laser-cefeb.firebasestorage.app",
+  messagingSenderId: "385467220302",
+  appId: "1:385467220302:web:18866f3c6cd5b24e365e1f",
 };

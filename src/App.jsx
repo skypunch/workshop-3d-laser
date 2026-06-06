@@ -12,10 +12,15 @@ export default function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Failsafe: never sit on "Loading…" forever if the auth check is slow —
+    // after 4s, fall back to showing the sign-in screen.
+    const failsafe = setTimeout(() => setLoading(false), 4000);
     // Fires on load and whenever the user signs in or out.
-    return onAuthStateChanged(auth, (u) => {
-      if (u && !isSchoolEmail(u.email)) {
-        // Someone signed in with a non-school Google account: reject + sign out.
+    const unsub = onAuthStateChanged(auth, (u) => {
+      clearTimeout(failsafe);
+      if (u && !isSchoolEmail(u.email) && !isAdminEmail(u.email)) {
+        // Someone signed in with a non-school Google account (and isn't an
+        // admin): reject + sign out. Admins are allowed in from any address.
         setError(`Please sign in with your @${SCHOOL_DOMAIN} account (you used ${u.email}).`);
         signOut(auth);
         setUser(null);
@@ -25,6 +30,10 @@ export default function App() {
       }
       setLoading(false);
     });
+    return () => {
+      clearTimeout(failsafe);
+      unsub();
+    };
   }, []);
 
   async function handleSignIn() {

@@ -5,8 +5,8 @@ service firebase.storage {
   match /b/{bucket}/o {
 
     // ── EDIT THESE TWO to match src/config.js (keep them lowercase) ──────────
-    function schoolDomain() { return "yourschool.edu"; }
-    function adminEmails()  { return ["you@yourschool.edu"]; }
+    function schoolDomain() { return "etonhouse.edu.sg"; }
+    function adminEmails()  { return ["marcus.wetherell@etonhouse.edu.sg"]; }
     // ─────────────────────────────────────────────────────────────────────────
 
     function signedIn() { return request.auth != null; }

@@ -32,7 +32,12 @@ export default function JoinForm({ user }) {
       // 1) Upload the file to Cloud Storage under this user's folder.
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `uploads/${user.uid}/${Date.now()}_${safeName}`;
-      await uploadBytes(ref(storage, path), file);
+      // contentDisposition "attachment" makes the admin's download button save
+      // the file to disk (with its original name) instead of opening it in a tab.
+      await uploadBytes(ref(storage, path), file, {
+        contentType: file.type || "application/octet-stream",
+        contentDisposition: `attachment; filename="${safeName}"`,
+      });
 
       // 2) Create the queue entry in Firestore that points at the file.
       await addDoc(collection(db, "jobs"), {

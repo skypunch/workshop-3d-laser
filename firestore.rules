@@ -5,8 +5,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── EDIT THESE TWO to match src/config.js ────────────────────────────────
-    function schoolDomain() { return "yourschool.edu"; }
-    function adminEmails()  { return ["you@yourschool.edu"]; }
+    function schoolDomain() { return "etonhouse.edu.sg"; }
+    function adminEmails()  { return ["marcus.wetherell@etonhouse.edu.sg"]; }
     // ─────────────────────────────────────────────────────────────────────────
 
     function signedIn() { return request.auth != null; }
@@ -21,8 +21,8 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && email() in adminEmails(); }
 
     match /jobs/{jobId} {
-      // Any signed-in school user can see the queue (positions, names, statuses).
-      allow read: if isSchool();
+      // Any signed-in school user (or an admin) can see the queue.
+      allow read: if isSchool() || isAdmin();
 
       // A user may only create a job for themselves, starting as "queued".
       allow create: if isSchool()

@@ -6,11 +6,11 @@
 
 // Only Google accounts ending in this domain may use the app.
 // e.g. "students.myschool.edu" or "myschool.edu"
-export const SCHOOL_DOMAIN = "yourschool.edu";
+export const SCHOOL_DOMAIN = "etonhouse.edu.sg";
 
 // Staff who can see every job, download files, and change statuses.
 // Add your own school email here (lowercase).
-export const ADMIN_EMAILS = ["you@yourschool.edu"];
+export const ADMIN_EMAILS = ["marcus.wetherell@etonhouse.edu.sg"];
 
 // ── Things you probably don't need to change ────────────────────────────────
 export const JOB_TYPES = ["3D Print", "Laser Cut"];
