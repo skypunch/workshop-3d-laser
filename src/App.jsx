@@ -56,7 +56,7 @@ export default function App() {
   const showStudentView = !!user && (!isAdmin || viewAsStudent);
 
   return (
-    <div className="app">
+    <div className={`app${user && !showStudentView ? " admin" : ""}`}>
       <header className="topbar">
         <div className="brand">
           <div>
