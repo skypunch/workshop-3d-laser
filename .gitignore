@@ -3,6 +3,9 @@ dist
 .DS_Store
 *.log
 
+# Local editor/agent settings
+.claude/settings.local.json
+
 # Firebase CLI local files
 .firebase
 firebase-debug.log
