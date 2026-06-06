@@ -73,6 +73,15 @@ export default function AdminDashboard() {
         const rows = visible.filter((j) => j.type === type);
         const labels = labelJobs(rows);
         const activeCount = counts[type].queued + counts[type].in_progress;
+        // Queue positions counted across ALL jobs of this type (not the filtered
+        // view), so a job's number matches what students see.
+        let q = 0;
+        const positions = {};
+        jobs
+          .filter((j) => j.type === type)
+          .forEach((j) => {
+            positions[j.id] = j.status === "queued" ? ++q : null;
+          });
         return (
           <section className="card" key={type}>
             <header className="queue-head">
@@ -85,6 +94,7 @@ export default function AdminDashboard() {
               <table className="admin-table">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Job</th>
                     <th>Requester</th>
                     <th>Notes</th>
@@ -96,6 +106,13 @@ export default function AdminDashboard() {
                 <tbody>
                   {rows.map((j) => (
                     <tr key={j.id} className={`status-row-${j.status}`}>
+                      <td className="pos-cell">
+                        {positions[j.id]
+                          ? `#${positions[j.id]}`
+                          : j.status === "in_progress"
+                            ? "▶"
+                            : "—"}
+                      </td>
                       <td><strong>{labels[j.id]}</strong></td>
                       <td className="small">
                         {j.ownerName}
