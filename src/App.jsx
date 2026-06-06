@@ -106,7 +106,7 @@ export default function App() {
 
       {showStudentView && (
         <footer className="muted footer">
-          Only you and Mr Wetherell can download your files.
+          Only Mr Wetherell can access your uploaded files.
         </footer>
       )}
     </div>
