@@ -36,7 +36,7 @@ export default function QueueList({ user }) {
       collection(db, "jobs"),
       where("status", "in", ["done", "rejected"]),
       orderBy("updatedAt", "desc"),
-      limit(40)
+      limit(100)
     );
     return onSnapshot(qFinished, (snap) =>
       setFinished(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
@@ -56,8 +56,8 @@ export default function QueueList({ user }) {
         }));
 
         const finishedOfType = finished.filter((j) => j.type === type);
-        const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 3);
-        const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 3);
+        const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 10);
+        const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 10);
 
         return (
           <div className="queue-col" key={type}>
@@ -84,9 +84,6 @@ export default function QueueList({ user }) {
             </section>
 
             <section className="card">
-              <header className="queue-head">
-                <h2 className="finished-title">Recently finished</h2>
-              </header>
               <FinishedGroup statusKey="done" jobs={completed} />
               <FinishedGroup statusKey="rejected" jobs={problems} />
             </section>
@@ -192,7 +189,7 @@ function QueueRow({ job, label, position, mine }) {
                   setDraft(e.target.value);
                 }}
                 rows={3}
-                maxLength={500}
+                maxLength={240}
                 placeholder="Notes for Mr Wetherell — material, color, quantity, anything to know…"
               />
               <div className="notes-actions">
