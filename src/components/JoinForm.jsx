@@ -2,15 +2,9 @@ import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, ACCEPTED_EXTENSIONS, MAX_FILE_MB } from "../config";
-
-function fileExtOk(name) {
-  const lower = name.toLowerCase();
-  return ACCEPTED_EXTENSIONS.some((ext) => lower.endsWith(ext));
-}
+import { ACCEPTED_EXTENSIONS, MAX_FILE_MB, typeForFile } from "../config";
 
 export default function JoinForm({ user }) {
-  const [type, setType] = useState(JOB_TYPES[0]);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState(null);
@@ -18,12 +12,16 @@ export default function JoinForm({ user }) {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  // The queue is decided by the file's extension (.stl → 3D Printing, .svg → Laser Cutter).
+  const detectedType = file ? typeForFile(file.name) : null;
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     if (!file) return setError("Please choose a file to upload.");
-    if (!fileExtOk(file.name)) return setError(`File must be one of: ${ACCEPTED_EXTENSIONS.join(", ")}`);
+    const type = typeForFile(file.name);
+    if (!type) return setError(`File must be one of: ${ACCEPTED_EXTENSIONS.join(", ")}`);
     if (file.size > MAX_FILE_MB * 1024 * 1024) return setError(`File must be under ${MAX_FILE_MB} MB.`);
     if (!title.trim()) return setError("Please give your job a short title.");
 
@@ -44,7 +42,7 @@ export default function JoinForm({ user }) {
         ownerUid: user.uid,
         ownerEmail: user.email,
         ownerName: user.displayName || user.email,
-        type,
+        type, // auto-detected from the extension
         title: title.trim(),
         notes: notes.trim(),
         fileName: file.name,
@@ -71,17 +69,6 @@ export default function JoinForm({ user }) {
       <h2>Join the queue</h2>
       <form onSubmit={handleSubmit} className="form">
         <label>
-          Type
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            {JOB_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
           Title
           <input
             type="text"
@@ -104,13 +91,28 @@ export default function JoinForm({ user }) {
         </label>
 
         <label>
-          File ({ACCEPTED_EXTENSIONS.join(" / ")}, max {MAX_FILE_MB} MB)
+          File
           <input
             type="file"
             accept={ACCEPTED_EXTENSIONS.join(",")}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
+          <span className="muted small">
+            Upload a <strong>.stl</strong> for 3D Printing or a <strong>.svg</strong> for the
+            Laser Cutter — the right queue is chosen automatically. Max {MAX_FILE_MB} MB.
+          </span>
         </label>
+
+        {file && detectedType && (
+          <div className="banner info">
+            This will join the <strong>{detectedType}</strong> queue.
+          </div>
+        )}
+        {file && !detectedType && (
+          <div className="banner error">
+            Unsupported file type — please choose a .stl or .svg file.
+          </div>
+        )}
 
         {error && <div className="banner error">{error}</div>}
         {done && <div className="banner success">Added to the queue! 🎉</div>}

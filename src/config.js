@@ -13,9 +13,23 @@ export const SCHOOL_DOMAIN = "etonhouse.edu.sg";
 export const ADMIN_EMAILS = ["marcus.wetherell@etonhouse.edu.sg"];
 
 // ── Things you probably don't need to change ────────────────────────────────
-export const JOB_TYPES = ["3D Print", "Laser Cut"];
-export const ACCEPTED_EXTENSIONS = [".stl", ".svg"];
+// Which queue a file goes into is decided by its extension.
+export const TYPE_BY_EXTENSION = {
+  ".stl": "3D Printing",
+  ".svg": "Laser Cutter",
+};
+
+// Display order of the two queues.
+export const JOB_TYPES = ["3D Printing", "Laser Cutter"];
+export const ACCEPTED_EXTENSIONS = Object.keys(TYPE_BY_EXTENSION);
 export const MAX_FILE_MB = 50;
+
+// Returns the queue name for a filename, or null if the extension isn't allowed.
+export function typeForFile(name) {
+  const lower = (name || "").toLowerCase();
+  const ext = ACCEPTED_EXTENSIONS.find((e) => lower.endsWith(e));
+  return ext ? TYPE_BY_EXTENSION[ext] : null;
+}
 
 export const STATUSES = ["queued", "in_progress", "done", "rejected"];
 export const STATUS_LABELS = {

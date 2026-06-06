@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { STATUSES, STATUS_LABELS } from "../config";
+import { JOB_TYPES, STATUSES, STATUS_LABELS } from "../config";
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -44,9 +44,15 @@ export default function AdminDashboard() {
     }
   }
 
+  // Live counts per queue (always reflect the whole queue, ignoring the filter).
   const counts = useMemo(() => {
-    const c = { queued: 0, in_progress: 0, done: 0, rejected: 0 };
-    jobs.forEach((j) => (c[j.status] = (c[j.status] || 0) + 1));
+    const c = {};
+    JOB_TYPES.forEach((t) => (c[t] = { queued: 0, in_progress: 0 }));
+    jobs.forEach((j) => {
+      if (c[j.type] && (j.status === "queued" || j.status === "in_progress")) {
+        c[j.type][j.status] += 1;
+      }
+    });
     return c;
   }, [jobs]);
 
@@ -55,76 +61,79 @@ export default function AdminDashboard() {
       <section className="card">
         <h2>Admin dashboard</h2>
         <div className="muted small">
-          Queued: {counts.queued} · In progress: {counts.in_progress} · Done: {counts.done} · Rejected:{" "}
-          {counts.rejected}
+          {JOB_TYPES.map((t) => (
+            <span key={t} style={{ marginRight: 16 }}>
+              <strong>{t}:</strong> {counts[t].queued} queued · {counts[t].in_progress} in progress
+            </span>
+          ))}
         </div>
         <div className="filters">
           {["active", "all", ...STATUSES].map((f) => (
-            <button
-              key={f}
-              className={`chip ${filter === f ? "on" : ""}`}
-              onClick={() => setFilter(f)}
-            >
+            <button key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
               {f === "active" ? "Active" : f === "all" ? "All" : STATUS_LABELS[f]}
             </button>
           ))}
         </div>
       </section>
 
-      <section className="card">
-        {visible.length === 0 ? (
-          <p className="muted">Nothing here.</p>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Requester</th>
-                <th>Notes</th>
-                <th>File</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((j) => (
-                <tr key={j.id} className={`status-row-${j.status}`}>
-                  <td>{j.title}</td>
-                  <td>
-                    <span className="tag">{j.type}</span>
-                  </td>
-                  <td className="small">
-                    {j.ownerName}
-                    <br />
-                    <span className="muted">{j.ownerEmail}</span>
-                  </td>
-                  <td className="small notes">{j.notes || <span className="muted">—</span>}</td>
-                  <td>
-                    <button className="btn ghost small" onClick={() => download(j)}>
-                      ⬇ {j.fileName}
-                    </button>
-                  </td>
-                  <td>
-                    <select value={j.status} onChange={(e) => setStatus(j, e.target.value)}>
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {STATUS_LABELS[s]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <button className="btn ghost small danger" onClick={() => remove(j)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      {JOB_TYPES.map((type) => {
+        const rows = visible.filter((j) => j.type === type);
+        return (
+          <section className="card" key={type}>
+            <h2>
+              {type} {rows.length > 0 && <span className="muted">· {rows.length}</span>}
+            </h2>
+            {rows.length === 0 ? (
+              <p className="muted">Nothing here.</p>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Requester</th>
+                    <th>Notes</th>
+                    <th>File</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((j) => (
+                    <tr key={j.id} className={`status-row-${j.status}`}>
+                      <td>{j.title}</td>
+                      <td className="small">
+                        {j.ownerName}
+                        <br />
+                        <span className="muted">{j.ownerEmail}</span>
+                      </td>
+                      <td className="small notes">{j.notes || <span className="muted">—</span>}</td>
+                      <td>
+                        <button className="btn ghost small" onClick={() => download(j)}>
+                          ⬇ {j.fileName}
+                        </button>
+                      </td>
+                      <td>
+                        <select value={j.status} onChange={(e) => setStatus(j, e.target.value)}>
+                          {STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_LABELS[s]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <button className="btn ghost small danger" onClick={() => remove(j)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+        );
+      })}
     </main>
   );
 }
