@@ -179,6 +179,8 @@ body {
 .admin-table select { background: var(--card-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 8px; font: inherit; }
 .admin-table .notes { max-width: 220px; white-space: pre-wrap; }
 .admin-table .pos-cell { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.admin-notes { margin-top: 6px; }
+.notes-reveal { margin: 6px 0 0; max-width: 260px; font-size: 13px; color: var(--text); white-space: pre-wrap; }
 .status-row-done { opacity: .55; }
 .status-row-rejected { opacity: .55; }
 

@@ -97,7 +97,6 @@ export default function AdminDashboard() {
                     <th>#</th>
                     <th>Job</th>
                     <th>Requester</th>
-                    <th>Notes</th>
                     <th>File</th>
                     <th>Status</th>
                     <th></th>
@@ -105,41 +104,15 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {rows.map((j) => (
-                    <tr key={j.id} className={`status-row-${j.status}`}>
-                      <td className="pos-cell">
-                        {positions[j.id]
-                          ? `#${positions[j.id]}`
-                          : j.status === "in_progress"
-                            ? "▶"
-                            : "—"}
-                      </td>
-                      <td><strong>{labels[j.id]}</strong></td>
-                      <td className="small">
-                        {j.ownerName}
-                        <br />
-                        <span className="muted">{j.ownerEmail}</span>
-                      </td>
-                      <td className="small notes">{j.notes || <span className="muted">—</span>}</td>
-                      <td>
-                        <button className="btn ghost small" onClick={() => download(j)}>
-                          ⬇ {j.fileName}
-                        </button>
-                      </td>
-                      <td>
-                        <select value={j.status} onChange={(e) => setStatus(j, e.target.value)}>
-                          {STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                              {STATUS_LABELS[s]}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <button className="btn ghost small danger" onClick={() => remove(j)}>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
+                    <AdminRow
+                      key={j.id}
+                      job={j}
+                      label={labels[j.id]}
+                      position={positions[j.id]}
+                      onDownload={download}
+                      onStatus={setStatus}
+                      onRemove={remove}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -148,5 +121,56 @@ export default function AdminDashboard() {
         );
       })}
     </main>
+  );
+}
+
+function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <tr className={`status-row-${job.status}`}>
+      <td className="pos-cell">
+        {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
+      </td>
+      <td>
+        <strong>{label}</strong>
+      </td>
+      <td className="small">
+        {job.ownerName}
+        <br />
+        <span className="muted">{job.ownerEmail}</span>
+      </td>
+      <td>
+        <button className="btn ghost small" onClick={() => onDownload(job)}>
+          ⬇ {job.fileName}
+        </button>
+        {job.notes && (
+          <div className="admin-notes">
+            <button
+              type="button"
+              className={`notes-toggle has-notes ${open ? "open" : ""}`}
+              onClick={() => setOpen((o) => !o)}
+            >
+              NOTES
+            </button>
+            {open && <p className="notes-reveal">{job.notes}</p>}
+          </div>
+        )}
+      </td>
+      <td>
+        <select value={job.status} onChange={(e) => onStatus(job, e.target.value)}>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td>
+        <button className="btn ghost small danger" onClick={() => onRemove(job)}>
+          Delete
+        </button>
+      </td>
+    </tr>
   );
 }
