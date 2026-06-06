@@ -60,13 +60,6 @@ export default function AdminDashboard() {
     <main className="stack">
       <section className="card">
         <h2>Admin dashboard</h2>
-        <div className="muted small">
-          {JOB_TYPES.map((t) => (
-            <span key={t} style={{ marginRight: 16 }}>
-              <strong>{t}:</strong> {counts[t].queued} queued · {counts[t].in_progress} in progress
-            </span>
-          ))}
-        </div>
         <div className="filters">
           {["active", "all", ...STATUSES].map((f) => (
             <button key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
@@ -79,11 +72,13 @@ export default function AdminDashboard() {
       {JOB_TYPES.map((type) => {
         const rows = visible.filter((j) => j.type === type);
         const labels = labelJobs(rows);
+        const activeCount = counts[type].queued + counts[type].in_progress;
         return (
           <section className="card" key={type}>
-            <h2>
-              {type} {rows.length > 0 && <span className="muted">· {rows.length}</span>}
-            </h2>
+            <header className="queue-head">
+              <h2>{type}</h2>
+              {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
+            </header>
             {rows.length === 0 ? (
               <p className="muted">Nothing here.</p>
             ) : (
