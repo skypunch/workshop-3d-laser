@@ -120,6 +120,16 @@ body {
 .queue-head h2 { margin: 0; }
 .queue-count { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 
+/* Each grid column stacks its queue card + "recently finished" card */
+.queue-col { display: flex; flex-direction: column; gap: 16px; }
+.finished-title { font-size: 14px; color: var(--muted); }
+.finished-group + .finished-group { margin-top: 16px; }
+.finished-group > .status { display: inline-block; margin-bottom: 8px; }
+.finished-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.finished-list li { display: flex; align-items: baseline; gap: 8px; }
+.finished-name { font-weight: 600; }
+.finished-empty { margin: 0; }
+
 .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .queue-row {
   display: flex; flex-direction: column; gap: 10px;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   }, [jobs, filter]);
 
   async function setStatus(job, status) {
-    await updateDoc(doc(db, "jobs", job.id), { status });
+    await updateDoc(doc(db, "jobs", job.id), { status, updatedAt: serverTimestamp() });
   }
 
   async function download(job) {

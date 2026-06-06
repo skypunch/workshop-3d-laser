@@ -35,8 +35,8 @@ export const STATUSES = ["queued", "in_progress", "done", "rejected"];
 export const STATUS_LABELS = {
   queued: "Queued",
   in_progress: "In progress",
-  done: "Done",
-  rejected: "Rejected",
+  done: "Completed",
+  rejected: "Problem",
 };
 
 // Best-effort first name from a display name (or email if no name is set).

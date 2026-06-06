@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -11,21 +12,35 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUS_LABELS, labelJobs } from "../config";
+import { JOB_TYPES, STATUS_LABELS, labelJobs, firstName } from "../config";
 
 export default function QueueList({ user }) {
   const [jobs, setJobs] = useState([]);
+  const [finished, setFinished] = useState([]);
 
   useEffect(() => {
-    // Show everything that's still active (queued or being worked on), oldest first.
-    const q = query(
+    // Active jobs (queued or being worked on), oldest first.
+    const qActive = query(
       collection(db, "jobs"),
       where("status", "in", ["queued", "in_progress"]),
       orderBy("createdAt", "asc")
     );
-    return onSnapshot(q, (snap) => {
-      setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    return onSnapshot(qActive, (snap) =>
+      setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    );
+  }, []);
+
+  useEffect(() => {
+    // Recently finished jobs (completed or problem), most recent first.
+    const qFinished = query(
+      collection(db, "jobs"),
+      where("status", "in", ["done", "rejected"]),
+      orderBy("updatedAt", "desc"),
+      limit(40)
+    );
+    return onSnapshot(qFinished, (snap) =>
+      setFinished(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    );
   }, []);
 
   return (
@@ -33,37 +48,71 @@ export default function QueueList({ user }) {
       {JOB_TYPES.map((type) => {
         const ofType = jobs.filter((j) => j.type === type);
         const labels = labelJobs(ofType);
-        // Position is counted only among "queued" jobs of this type.
+        // Position counts only "queued" jobs of this type.
         let queuedSoFar = 0;
         const rows = ofType.map((j) => ({
           ...j,
           position: j.status === "queued" ? ++queuedSoFar : null,
         }));
 
+        const finishedOfType = finished.filter((j) => j.type === type);
+        const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 3);
+        const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 3);
+
         return (
-          <section className="card" key={type}>
-            <header className="queue-head">
-              <h2>{type}</h2>
-              {rows.length > 0 && <span className="queue-count">{rows.length} in queue</span>}
-            </header>
-            {rows.length === 0 ? (
-              <p className="muted">This queue is empty.</p>
-            ) : (
-              <ul className="queue">
-                {rows.map((j) => (
-                  <QueueRow
-                    key={j.id}
-                    job={j}
-                    label={labels[j.id]}
-                    position={j.position}
-                    mine={j.ownerUid === user.uid}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
+          <div className="queue-col" key={type}>
+            <section className="card">
+              <header className="queue-head">
+                <h2>{type}</h2>
+                {rows.length > 0 && <span className="queue-count">{rows.length} in queue</span>}
+              </header>
+              {rows.length === 0 ? (
+                <p className="muted">This queue is empty.</p>
+              ) : (
+                <ul className="queue">
+                  {rows.map((j) => (
+                    <QueueRow
+                      key={j.id}
+                      job={j}
+                      label={labels[j.id]}
+                      position={j.position}
+                      mine={j.ownerUid === user.uid}
+                    />
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="card">
+              <header className="queue-head">
+                <h2 className="finished-title">Recently finished</h2>
+              </header>
+              <FinishedGroup statusKey="done" jobs={completed} />
+              <FinishedGroup statusKey="rejected" jobs={problems} />
+            </section>
+          </div>
         );
       })}
+    </div>
+  );
+}
+
+function FinishedGroup({ statusKey, jobs }) {
+  return (
+    <div className="finished-group">
+      <span className={`status status-${statusKey}`}>{STATUS_LABELS[statusKey]}</span>
+      {jobs.length === 0 ? (
+        <p className="muted small finished-empty">None yet.</p>
+      ) : (
+        <ul className="finished-list">
+          {jobs.map((j) => (
+            <li key={j.id}>
+              <span className="finished-name">{firstName(j.ownerName)}</span>
+              <span className="muted small filename">{j.fileName}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
