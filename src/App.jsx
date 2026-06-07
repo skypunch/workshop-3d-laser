@@ -91,12 +91,6 @@ export default function App() {
         </div>
       ) : showStudentView ? (
         <main className="stack">
-          {isAdmin && (
-            <div className="banner info">
-              👁 Previewing the student view — use “Back to admin” (top right) to return.
-              Anything you upload here goes into the real queue.
-            </div>
-          )}
           <JoinForm user={user} />
           <QueueList user={user} />
         </main>
