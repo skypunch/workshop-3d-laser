@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
+import { JOB_TYPES, STATUSES, STATUS_LABELS } from "../config";
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -71,7 +71,6 @@ export default function AdminDashboard() {
 
       {JOB_TYPES.map((type) => {
         const rows = visible.filter((j) => j.type === type);
-        const labels = labelJobs(rows);
         const activeCount = counts[type].queued + counts[type].in_progress;
         // Queue positions counted across ALL jobs of this type (not the filtered
         // view), so a job's number matches what students see.
@@ -95,7 +94,6 @@ export default function AdminDashboard() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Job</th>
                     <th>Requester</th>
                     <th>File</th>
                     <th>Status</th>
@@ -107,7 +105,6 @@ export default function AdminDashboard() {
                     <AdminRow
                       key={j.id}
                       job={j}
-                      label={labels[j.id]}
                       position={positions[j.id]}
                       onDownload={download}
                       onStatus={setStatus}
@@ -124,16 +121,13 @@ export default function AdminDashboard() {
   );
 }
 
-function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
+function AdminRow({ job, position, onDownload, onStatus, onRemove }) {
   const [open, setOpen] = useState(false);
 
   return (
     <tr className={`status-row-${job.status}`}>
       <td className="pos-cell">
         {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
-      </td>
-      <td>
-        <strong>{label}</strong>
       </td>
       <td className="small">
         {job.ownerName}
