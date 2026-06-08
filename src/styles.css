@@ -43,6 +43,11 @@ body {
   background: var(--card-2); border-radius: 12px;
 }
 .topbar h1 { font-size: 18px; margin: 0; }
+.url-mono {
+  font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 500;
+  font-size: 0.9em;
+}
 .topbar p { margin: 0; font-size: 12px; }
 .userbox { display: flex; align-items: center; gap: 10px; }
 
