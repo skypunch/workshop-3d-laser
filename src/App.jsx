@@ -62,7 +62,7 @@ export default function App() {
           <div>
             <h1>
               Workshop 3D Printing and Laser Cutting Queue:{" "}
-              <span className="url-mono">tinyurl/ehprintcut</span>
+              <span className="url-mono">tinyurl.com/ehprintcut</span>
             </h1>
           </div>
         </div>
