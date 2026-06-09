@@ -24,8 +24,8 @@ body {
 }
 
 .app { max-width: 1500px; margin: 0 auto; padding: 16px; }
-/* Keep the upload box (and its green button) at the original narrower width. */
-.upload-card { max-width: 1128px; }
+/* Keep the upload box (and its green button) at the original narrower width, centered. */
+.upload-card { max-width: 1128px; width: 100%; align-self: center; }
 
 /* The two queues side by side (stacks on narrow screens).
    minmax(0, 1fr) lets columns shrink so long filenames truncate instead of
