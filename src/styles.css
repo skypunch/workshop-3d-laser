@@ -51,6 +51,24 @@ body {
 .topbar p { margin: 0; font-size: 12px; }
 .userbox { display: flex; align-items: center; gap: 10px; }
 
+.name-btn {
+  background: transparent; border: 1px solid transparent; color: var(--muted);
+  font: inherit; font-weight: 600; cursor: pointer; padding: 6px 10px; border-radius: 10px;
+}
+.name-btn:hover { color: var(--text); border-color: var(--border); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, .55);
+  display: grid; place-items: center; padding: 20px; z-index: 50;
+}
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 22px; max-width: 360px; width: 100%;
+}
+.modal h3 { margin: 0 0 8px; font-size: 17px; }
+.modal p { margin: 0 0 18px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
 .badge {
   font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
   background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 999px;

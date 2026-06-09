@@ -11,6 +11,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewAsStudent, setViewAsStudent] = useState(false); // admins can preview the student view
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   useEffect(() => {
     // Failsafe: never sit on "Loading…" forever if the auth check is slow —
@@ -68,15 +69,18 @@ export default function App() {
         </div>
         {user && (
           <div className="userbox">
-            <span className="muted">{user.displayName || user.email}</span>
-            {isAdmin && <span className="badge">admin</span>}
             {isAdmin && (
               <button className="btn ghost small" onClick={() => setViewAsStudent((v) => !v)}>
                 {viewAsStudent ? "Back to admin" : "View as student"}
               </button>
             )}
-            <button className="btn ghost" onClick={() => signOut(auth)}>
-              Sign out
+            {isAdmin && <span className="badge">admin</span>}
+            <button
+              className="name-btn"
+              onClick={() => setConfirmSignOut(true)}
+              title="Click to sign out"
+            >
+              {user.displayName || user.email}
             </button>
           </div>
         )}
@@ -105,6 +109,37 @@ export default function App() {
         <footer className="muted footer">
           Only Mr Wetherell can access your uploaded files.
         </footer>
+      )}
+
+      {confirmSignOut && (
+        <div className="modal-overlay" onClick={() => setConfirmSignOut(false)}>
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Sign out?</h3>
+            <p className="muted">
+              You're signed in as {user?.displayName || user?.email}. You'll need to sign in
+              with Google again to rejoin.
+            </p>
+            <div className="modal-actions">
+              <button className="btn ghost" onClick={() => setConfirmSignOut(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn primary"
+                onClick={() => {
+                  setConfirmSignOut(false);
+                  signOut(auth);
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

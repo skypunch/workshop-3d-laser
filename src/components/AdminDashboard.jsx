@@ -134,9 +134,7 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
               <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
             )}
           </div>
-          <div className="muted small">
-            {job.ownerName} <span className="admin-email">{job.ownerEmail}</span>
-          </div>
+          <div className="muted small">{job.ownerName}</div>
         </div>
         <div className="row-actions">
           {job.notes && (
