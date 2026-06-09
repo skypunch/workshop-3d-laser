@@ -12,8 +12,9 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUS_LABELS, labelJobs, firstName } from "../config";
+import { JOB_TYPES, STATUS_LABELS, labelJobs } from "../config";
 import { TrashIcon } from "./icons.jsx";
+import FinishedGroup from "./FinishedGroup.jsx";
 
 export default function QueueList({ user }) {
   const [jobs, setJobs] = useState([]);
@@ -91,26 +92,6 @@ export default function QueueList({ user }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function FinishedGroup({ statusKey, jobs }) {
-  return (
-    <div className="finished-group">
-      <span className={`status status-${statusKey}`}>{STATUS_LABELS[statusKey]}</span>
-      {jobs.length === 0 ? (
-        <p className="muted small finished-empty">None yet.</p>
-      ) : (
-        <ul className="finished-list">
-          {jobs.map((j) => (
-            <li key={j.id}>
-              <span className="finished-name">{firstName(j.ownerName)}</span>
-              <span className="muted small filename">{j.fileName}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

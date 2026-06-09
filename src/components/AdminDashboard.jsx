@@ -4,6 +4,13 @@ import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
 import { TrashIcon } from "./icons.jsx";
+import FinishedGroup from "./FinishedGroup.jsx";
+
+// Most recent first, by when the status was last changed (falls back to created).
+function finishedMs(j) {
+  const t = j.updatedAt || j.createdAt;
+  return t?.toMillis ? t.toMillis() : 0;
+}
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -84,30 +91,44 @@ export default function AdminDashboard() {
             .forEach((j) => {
               positions[j.id] = j.status === "queued" ? ++q : null;
             });
+          // Recently finished (most recent first), independent of the status filter.
+          const finishedOfType = jobs
+            .filter((j) => j.type === type && (j.status === "done" || j.status === "rejected"))
+            .sort((a, b) => finishedMs(b) - finishedMs(a));
+          const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 10);
+          const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 10);
+
           return (
-            <section className="card" key={type}>
-              <header className="queue-head">
-                <h2>{type}</h2>
-                {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
-              </header>
-              {rows.length === 0 ? (
-                <p className="muted">Nothing here.</p>
-              ) : (
-                <ul className="queue">
-                  {rows.map((j) => (
-                    <AdminRow
-                      key={j.id}
-                      job={j}
-                      label={labels[j.id]}
-                      position={positions[j.id]}
-                      onDownload={download}
-                      onStatus={setStatus}
-                      onRemove={remove}
-                    />
-                  ))}
-                </ul>
-              )}
-            </section>
+            <div className="queue-col" key={type}>
+              <section className="card">
+                <header className="queue-head">
+                  <h2>{type}</h2>
+                  {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
+                </header>
+                {rows.length === 0 ? (
+                  <p className="muted">Nothing here.</p>
+                ) : (
+                  <ul className="queue">
+                    {rows.map((j) => (
+                      <AdminRow
+                        key={j.id}
+                        job={j}
+                        label={labels[j.id]}
+                        position={positions[j.id]}
+                        onDownload={download}
+                        onStatus={setStatus}
+                        onRemove={remove}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className="card">
+                <FinishedGroup statusKey="done" jobs={completed} />
+                <FinishedGroup statusKey="rejected" jobs={problems} />
+              </section>
+            </div>
           );
         })}
       </div>
