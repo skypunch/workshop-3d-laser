@@ -40,5 +40,11 @@ service cloud.firestore {
       // Admins can delete anything; users can cancel (delete) their own job.
       allow delete: if isAdmin() || (isSchool() && resource.data.ownerUid == request.auth.uid);
     }
+
+    // Shared settings (e.g. the "available print colours" note shown to everyone).
+    match /settings/{docId} {
+      allow read: if isSchool() || isAdmin();
+      allow write: if isAdmin();
+    }
   }
 }

@@ -35,9 +35,19 @@ body {
 
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  gap: 16px; padding: 12px 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  flex-wrap: wrap;
 }
+.topbar-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 12px; }
+
+.colours-card { padding: 12px 14px; max-width: 340px; width: 100%; }
+.colours-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.colours-field {
+  width: 100%; background: var(--card-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; resize: vertical;
+}
+.colours-readonly { white-space: pre-wrap; min-height: 22px; }
 .logo {
   font-size: 22px; width: 42px; height: 42px; display: grid; place-items: center;
   background: var(--card-2); border-radius: 12px;
