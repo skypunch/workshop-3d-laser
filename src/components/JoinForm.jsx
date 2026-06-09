@@ -72,7 +72,7 @@ export default function JoinForm({ user }) {
   }
 
   return (
-    <section className="card">
+    <section className="card upload-card">
       <div className="form">
         <input
           ref={fileInputRef}

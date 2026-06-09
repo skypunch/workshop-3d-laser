@@ -23,9 +23,9 @@ body {
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.app { max-width: 1160px; margin: 0 auto; padding: 16px; }
-/* Admin dashboard needs more room for two side-by-side tables. */
-.app.admin { max-width: 1500px; }
+.app { max-width: 1500px; margin: 0 auto; padding: 16px; }
+/* Keep the upload box (and its green button) at the original narrower width. */
+.upload-card { max-width: 1128px; }
 
 /* The two queues side by side (stacks on narrow screens).
    minmax(0, 1fr) lets columns shrink so long filenames truncate instead of
