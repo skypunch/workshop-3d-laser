@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUSES, STATUS_LABELS } from "../config";
+import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
+import { TrashIcon } from "./icons.jsx";
 
 export default function AdminDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
   }
 
   async function remove(job) {
-    if (!confirm(`Delete "${job.title || job.fileName}" by ${job.ownerName}? This also deletes the file.`)) return;
+    if (!confirm(`Delete "${job.fileName}" by ${job.ownerName}? This also deletes the file.`)) return;
     try {
       await deleteDoc(doc(db, "jobs", job.id));
       if (job.filePath) await deleteObject(ref(storage, job.filePath)).catch(() => {});
@@ -71,77 +72,74 @@ export default function AdminDashboard() {
 
       <div className="queues-grid">
         {JOB_TYPES.map((type) => {
-        const rows = visible.filter((j) => j.type === type);
-        const activeCount = counts[type].queued + counts[type].in_progress;
-        // Queue positions counted across ALL jobs of this type (not the filtered
-        // view), so a job's number matches what students see.
-        let q = 0;
-        const positions = {};
-        jobs
-          .filter((j) => j.type === type)
-          .forEach((j) => {
-            positions[j.id] = j.status === "queued" ? ++q : null;
-          });
-        return (
-          <section className="card" key={type}>
-            <header className="queue-head">
-              <h2>{type}</h2>
-              {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
-            </header>
-            {rows.length === 0 ? (
-              <p className="muted">Nothing here.</p>
-            ) : (
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Requester</th>
-                    <th>File</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
+          const rows = visible.filter((j) => j.type === type);
+          const labels = labelJobs(rows);
+          const activeCount = counts[type].queued + counts[type].in_progress;
+          // Queue positions counted across ALL jobs of this type (not the filtered
+          // view), so a job's number matches what students see.
+          let q = 0;
+          const positions = {};
+          jobs
+            .filter((j) => j.type === type)
+            .forEach((j) => {
+              positions[j.id] = j.status === "queued" ? ++q : null;
+            });
+          return (
+            <section className="card" key={type}>
+              <header className="queue-head">
+                <h2>{type}</h2>
+                {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
+              </header>
+              {rows.length === 0 ? (
+                <p className="muted">Nothing here.</p>
+              ) : (
+                <ul className="queue">
                   {rows.map((j) => (
                     <AdminRow
                       key={j.id}
                       job={j}
+                      label={labels[j.id]}
                       position={positions[j.id]}
                       onDownload={download}
                       onStatus={setStatus}
                       onRemove={remove}
                     />
                   ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        );
+                </ul>
+              )}
+            </section>
+          );
         })}
       </div>
     </main>
   );
 }
 
-function AdminRow({ job, position, onDownload, onStatus, onRemove }) {
+function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <tr className={`status-row-${job.status}`}>
-      <td className="pos-cell">
-        {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
-      </td>
-      <td className="small">
-        {job.ownerName}
-        <br />
-        <span className="muted admin-email">{job.ownerEmail}</span>
-      </td>
-      <td>
-        <button className="btn ghost small" onClick={() => onDownload(job)}>
-          ⬇ {job.fileName}
-        </button>
-        {job.notes && (
-          <div className="admin-notes">
+    <li className="queue-row">
+      <div className="row-main">
+        <span className="pos">
+          {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
+        </span>
+        <div className="grow">
+          <div className="line1">
+            <strong>{label}</strong>
+            <button className="btn ghost small file-link" onClick={() => onDownload(job)} title="Download file">
+              ⬇ {job.fileName}
+            </button>
+            {job.status !== "queued" && (
+              <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
+            )}
+          </div>
+          <div className="muted small">
+            {job.ownerName} <span className="admin-email">{job.ownerEmail}</span>
+          </div>
+        </div>
+        <div className="row-actions">
+          {job.notes && (
             <button
               type="button"
               className={`notes-toggle has-notes ${open ? "open" : ""}`}
@@ -149,43 +147,30 @@ function AdminRow({ job, position, onDownload, onStatus, onRemove }) {
             >
               NOTES
             </button>
-            {open && <p className="notes-reveal">{job.notes}</p>}
-          </div>
-        )}
-      </td>
-      <td>
-        <select value={job.status} onChange={(e) => onStatus(job, e.target.value)}>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-      </td>
-      <td>
-        <button
-          className="btn ghost small danger icon-btn"
-          onClick={() => onRemove(job)}
-          aria-label="Delete job"
-          title="Delete"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          )}
+          <select className="status-select" value={job.status} onChange={(e) => onStatus(job, e.target.value)}>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn ghost small danger icon-btn"
+            onClick={() => onRemove(job)}
+            aria-label="Delete job"
+            title="Delete"
           >
-            <path d="M3 6h18" />
-            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-            <path d="M10 11v6" />
-            <path d="M14 11v6" />
-          </svg>
-        </button>
-      </td>
-    </tr>
+            <TrashIcon />
+          </button>
+        </div>
+      </div>
+
+      {open && job.notes && (
+        <div className="notes-panel">
+          <p className="muted small">{job.notes}</p>
+        </div>
+      )}
+    </li>
   );
 }

@@ -13,6 +13,7 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUS_LABELS, labelJobs, firstName } from "../config";
+import { TrashIcon } from "./icons.jsx";
 
 export default function QueueList({ user }) {
   const [jobs, setJobs] = useState([]);
@@ -171,8 +172,14 @@ function QueueRow({ job, label, position, mine }) {
             NOTES
           </button>
           {mine && job.status === "queued" && (
-            <button type="button" className="delete-pill" onClick={cancel}>
-              DELETE
+            <button
+              type="button"
+              className="btn ghost small danger icon-btn"
+              onClick={cancel}
+              aria-label="Delete job"
+              title="Delete"
+            >
+              <TrashIcon />
             </button>
           )}
         </div>

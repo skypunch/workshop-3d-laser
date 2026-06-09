@@ -197,6 +197,13 @@ body {
 .admin-email { font-size: 11px; }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; }
 .icon-btn svg { width: 16px; height: 16px; display: block; }
+
+/* Admin row: filename as a download link (truncates) + status dropdown */
+.file-link { min-width: 0; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-select {
+  background: var(--card-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 4px 6px; font: inherit; font-size: 12px;
+}
 .admin-notes { margin-top: 6px; }
 .notes-reveal { margin: 6px 0 0; max-width: 260px; font-size: 13px; color: var(--text); white-space: pre-wrap; }
 .status-row-done { opacity: .55; }
