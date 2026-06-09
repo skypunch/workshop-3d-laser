@@ -42,7 +42,7 @@ export default function ColoursBox({ editable }) {
 
   return (
     <div className="colours-inline">
-      <span className="colours-title">Currently available 3D printing colours</span>
+      <span className="colours-title">Currently available 3D printing colours:</span>
       {editable ? (
         <input
           className="colours-field"
