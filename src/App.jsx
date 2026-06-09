@@ -61,10 +61,8 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <div>
-            <h1>
-              Workshop 3D Printing and Laser Cutting Queue:{" "}
-              <span className="url-mono">tinyurl.com/ehprintcut</span>
-            </h1>
+            <h1>Workshop 3D Printing and Laser Cutting Queue</h1>
+            <span className="url-mono">tinyurl.com/ehprintcut</span>
           </div>
         </div>
         {user && (

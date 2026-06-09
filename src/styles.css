@@ -42,11 +42,16 @@ body {
   font-size: 22px; width: 42px; height: 42px; display: grid; place-items: center;
   background: var(--card-2); border-radius: 12px;
 }
-.topbar h1 { font-size: 18px; margin: 0; }
+.topbar h1 {
+  font-size: 18px; margin: 0;
+  display: inline; color: #000; background: #fff;
+  padding: 2px 7px; border-radius: 3px; line-height: 1.5;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
 .url-mono {
   font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-weight: 500;
-  font-size: 0.9em;
+  font-weight: 500; font-size: 13px; color: var(--muted);
+  display: block; margin-top: 8px;
 }
 .topbar p { margin: 0; font-size: 12px; }
 .userbox { display: flex; align-items: center; gap: 10px; }
