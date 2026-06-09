@@ -38,16 +38,20 @@ body {
   gap: 16px; padding: 12px 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
   flex-wrap: wrap;
 }
-.topbar-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 12px; }
 
-.colours-card { padding: 12px 14px; max-width: 340px; width: 100%; }
-.colours-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
-.colours-field {
-  width: 100%; background: var(--card-2); border: 1px solid var(--border); color: var(--text);
-  border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; resize: vertical;
+/* "Available colours" box, sitting inline to the right of the queue title */
+.colours-inline {
+  display: flex; align-items: center; gap: 10px; margin-left: auto;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-2);
 }
-.colours-readonly { white-space: pre-wrap; min-height: 22px; }
+.colours-title { font-size: 12px; font-weight: 600; color: var(--muted); }
+.colours-field {
+  width: 200px; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px;
+}
+.colours-readonly { white-space: pre-wrap; }
+.colours-status { white-space: nowrap; }
 .logo {
   font-size: 22px; width: 42px; height: 42px; display: grid; place-items: center;
   background: var(--card-2); border-radius: 12px;
@@ -154,7 +158,7 @@ body {
 .signin .btn { margin-top: 16px; }
 
 /* Queue title with inline "N IN QUEUE" count */
-.queue-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.queue-head { display: flex; align-items: center; gap: 10px; row-gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .queue-head h2 { margin: 0; }
 .queue-count { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 

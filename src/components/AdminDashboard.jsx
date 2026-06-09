@@ -5,6 +5,7 @@ import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
 import { TrashIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
+import ColoursBox from "./ColoursBox.jsx";
 
 // Most recent first, by when the status was last changed (falls back to created).
 function finishedMs(j) {
@@ -104,6 +105,7 @@ export default function AdminDashboard() {
                 <header className="queue-head">
                   <h2>{type}</h2>
                   {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
+                  {type === "3D Printing" && <ColoursBox editable={true} />}
                 </header>
                 {rows.length === 0 ? (
                   <p className="muted">Nothing here.</p>

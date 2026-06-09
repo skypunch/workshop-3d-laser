@@ -5,7 +5,6 @@ import { isSchoolEmail, isAdminEmail, SCHOOL_DOMAIN } from "./config";
 import JoinForm from "./components/JoinForm.jsx";
 import QueueList from "./components/QueueList.jsx";
 import AdminDashboard from "./components/AdminDashboard.jsx";
-import ColoursBox from "./components/ColoursBox.jsx";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -60,14 +59,11 @@ export default function App() {
   return (
     <div className={`app${user && !showStudentView ? " admin" : ""}`}>
       <header className="topbar">
-        <div className="topbar-left">
-          <div className="brand">
-            <div>
-              <h1>Workshop 3D Printing and Laser Cutting Queue</h1>
-              <span className="url-mono">tinyurl.com/ehprintcut</span>
-            </div>
+        <div className="brand">
+          <div>
+            <h1>Workshop 3D Printing and Laser Cutting Queue</h1>
+            <span className="url-mono">tinyurl.com/ehprintcut</span>
           </div>
-          {user && <ColoursBox editable={isAdmin && !viewAsStudent} />}
         </div>
         {user && (
           <div className="userbox">

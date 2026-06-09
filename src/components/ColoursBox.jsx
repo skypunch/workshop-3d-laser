@@ -41,32 +41,30 @@ export default function ColoursBox({ editable }) {
   }, [draft, remote, editable, ready]);
 
   return (
-    <section className="card colours-card">
-      <div className="colours-title">Currently available 3D printing colours</div>
+    <div className="colours-inline">
+      <span className="colours-title">Currently available 3D printing colours</span>
       {editable ? (
-        <>
-          <textarea
-            className="colours-field"
-            value={draft}
-            onChange={(e) => {
-              setTouched(true);
-              setDraft(e.target.value);
-            }}
-            rows={2}
-            maxLength={300}
-            placeholder="e.g. Black, White, Red, Blue, Grey"
-          />
-          <div className="notes-actions">
-            <span className="muted small">
-              {saving || dirty ? "Saving…" : touched ? "Saved ✓" : ""}
-            </span>
-          </div>
-        </>
+        <input
+          className="colours-field"
+          type="text"
+          value={draft}
+          onChange={(e) => {
+            setTouched(true);
+            setDraft(e.target.value);
+          }}
+          maxLength={200}
+          placeholder="e.g. Black, White, Red, Blue"
+        />
       ) : (
-        <div className="colours-field colours-readonly">
+        <span className="colours-field colours-readonly">
           {remote ? remote : <span className="muted">Not set yet.</span>}
-        </div>
+        </span>
       )}
-    </section>
+      {editable && (
+        <span className="muted small colours-status">
+          {saving || dirty ? "Saving…" : touched ? "Saved ✓" : ""}
+        </span>
+      )}
+    </div>
   );
 }

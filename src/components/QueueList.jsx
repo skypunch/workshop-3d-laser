@@ -15,6 +15,7 @@ import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUS_LABELS, labelJobs } from "../config";
 import { TrashIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
+import ColoursBox from "./ColoursBox.jsx";
 
 export default function QueueList({ user }) {
   const [jobs, setJobs] = useState([]);
@@ -67,6 +68,7 @@ export default function QueueList({ user }) {
               <header className="queue-head">
                 <h2>{type}</h2>
                 {rows.length > 0 && <span className="queue-count">{rows.length} in queue</span>}
+                {type === "3D Printing" && <ColoursBox editable={false} />}
               </header>
               {rows.length === 0 ? (
                 <p className="muted">This queue is empty.</p>
