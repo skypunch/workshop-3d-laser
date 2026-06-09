@@ -43,7 +43,7 @@ body {
 /* "Available colours" box, sitting inline to the right of the queue title */
 .colours-inline {
   display: flex; align-items: center; gap: 10px; margin-left: auto;
-  padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-2);
+  height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-2);
 }
 .colours-title { font-size: 12px; font-weight: 600; color: var(--muted); }
 .colours-field {
@@ -157,8 +157,10 @@ body {
 .signin h2 { margin-bottom: 6px; }
 .signin .btn { margin-top: 16px; }
 
-/* Queue title with inline "N IN QUEUE" count */
-.queue-head { display: flex; align-items: center; gap: 10px; row-gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+/* Queue title with inline "N IN QUEUE" count.
+   Fixed min-height so both queue headers line up even though only the 3D
+   Printing one carries the colours box. */
+.queue-head { display: flex; align-items: center; gap: 10px; row-gap: 8px; min-height: 40px; margin-bottom: 14px; flex-wrap: wrap; }
 .queue-head h2 { margin: 0; }
 .queue-count { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 
