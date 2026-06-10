@@ -125,7 +125,7 @@ export default function JoinForm({ user }) {
             <path d="m6 10 6-6 6 6" />
             <path d="M4 20h16" />
           </svg>
-          {busy ? "Uploading…" : "Upload a file for printing or cutting"}
+          {busy ? "Uploading…" : "Drag a file here or click to upload"}
         </label>
         <span className="muted small upload-hint">Maximum {MAX_FILE_MB} MB</span>
 
