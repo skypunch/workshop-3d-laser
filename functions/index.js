@@ -1,6 +1,12 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
+
+initializeApp();
 
 // Stored as Firebase Functions secrets (not in the repo). Set with:
 //   firebase functions:secrets:set PUSHOVER_TOKEN
@@ -52,5 +58,47 @@ export const notifyOnNewJob = onDocumentCreated(
     } catch (err) {
       logger.error("Pushover request threw", err);
     }
+  }
+);
+
+// Nightly cleanup: delete Completed/Problem jobs (and their uploaded files)
+// once they're more than 30 days old. Active (queued/in-progress) jobs are
+// never touched.
+export const cleanupOldJobs = onSchedule(
+  {
+    schedule: "every day 03:00",
+    timeZone: "Asia/Singapore",
+    region: "asia-southeast1",
+  },
+  async () => {
+    const db = getFirestore();
+    const bucket = getStorage().bucket();
+    const cutoff = Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const snap = await db
+      .collection("jobs")
+      .where("status", "in", ["done", "rejected"])
+      .where("updatedAt", "<", cutoff)
+      .get();
+
+    if (snap.empty) {
+      logger.info("cleanupOldJobs: nothing to delete");
+      return;
+    }
+
+    let deleted = 0;
+    for (const docSnap of snap.docs) {
+      const { filePath, fileName } = docSnap.data();
+      if (filePath) {
+        await bucket.file(filePath).delete().catch((e) => {
+          // File may already be gone — log and keep going.
+          logger.warn(`cleanupOldJobs: could not delete file ${filePath}`, e?.message);
+        });
+      }
+      await docSnap.ref.delete();
+      deleted++;
+      logger.info(`cleanupOldJobs: deleted ${docSnap.id} (${fileName || "no file"})`);
+    }
+    logger.info(`cleanupOldJobs: removed ${deleted} job(s) older than 30 days`);
   }
 );

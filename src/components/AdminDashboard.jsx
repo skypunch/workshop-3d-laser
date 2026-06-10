@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
@@ -14,15 +14,38 @@ function finishedMs(j) {
 }
 
 export default function AdminDashboard() {
-  const [jobs, setJobs] = useState([]);
+  const [activeJobs, setActiveJobs] = useState([]);
+  const [finishedJobs, setFinishedJobs] = useState([]);
   const [filter, setFilter] = useState("active"); // active | all | queued | in_progress | done | rejected
 
+  // Two capped listeners instead of the whole collection: the active queue is
+  // naturally small, and finished history is limited to the most recent 100
+  // (older entries are auto-deleted after 30 days by the cleanup function).
   useEffect(() => {
-    const q = query(collection(db, "jobs"), orderBy("createdAt", "asc"));
-    return onSnapshot(q, (snap) => {
-      setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const qActive = query(
+      collection(db, "jobs"),
+      where("status", "in", ["queued", "in_progress"]),
+      orderBy("createdAt", "asc")
+    );
+    return onSnapshot(qActive, (snap) => {
+      setActiveJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
   }, []);
+
+  useEffect(() => {
+    const qFinished = query(
+      collection(db, "jobs"),
+      where("status", "in", ["done", "rejected"]),
+      orderBy("updatedAt", "desc"),
+      limit(100)
+    );
+    return onSnapshot(qFinished, (snap) => {
+      setFinishedJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, []);
+
+  // Active first (oldest-first), then finished (most recent first).
+  const jobs = useMemo(() => [...activeJobs, ...finishedJobs], [activeJobs, finishedJobs]);
 
   const visible = useMemo(() => {
     if (filter === "all") return jobs;
