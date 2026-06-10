@@ -38,6 +38,19 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    // Stop the browser from navigating away (opening the file) when a file is
+    // dropped anywhere outside the upload box. The box's own onDrop still runs
+    // and uploads as normal.
+    const prevent = (e) => e.preventDefault();
+    window.addEventListener("dragover", prevent);
+    window.addEventListener("drop", prevent);
+    return () => {
+      window.removeEventListener("dragover", prevent);
+      window.removeEventListener("drop", prevent);
+    };
+  }, []);
+
   async function handleSignIn() {
     setError("");
     try {
