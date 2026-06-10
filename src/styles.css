@@ -127,6 +127,12 @@ body {
 }
 .upload-btn:hover { filter: brightness(1.06); }
 .upload-btn:active { transform: translateY(1px); }
+/* Shown while a file is dragged anywhere over the upload box */
+.upload-btn.dragover {
+  filter: brightness(1.12);
+  outline: 3px dashed rgba(255, 255, 255, .75);
+  outline-offset: -5px;
+}
 .upload-btn svg { width: 24px; height: 24px; }
 /* Keyboard focus ring (label is focusable via the input) */
 #queue-file-input:focus-visible + .upload-btn { outline: 3px solid rgba(46,204,113,.5); outline-offset: 2px; }

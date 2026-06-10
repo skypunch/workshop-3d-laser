@@ -8,6 +8,7 @@ export default function JoinForm({ user }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [doneMsg, setDoneMsg] = useState("");
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   function clearInput() {
@@ -71,8 +72,32 @@ export default function JoinForm({ user }) {
     if (f) submitJob(f);
   }
 
+  // The whole upload box is a drop zone; only the button shows the visual cue.
+  function handleDragOver(e) {
+    e.preventDefault(); // required, or the browser just opens the dropped file
+    if (!busy && !dragging) setDragging(true);
+  }
+
+  function handleDragLeave(e) {
+    // Ignore leaves that are just moving onto a child element inside the box.
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setDragging(false);
+    if (busy) return;
+    const f = e.dataTransfer.files?.[0]; // take the first file, ignore the rest
+    if (f) submitJob(f);
+  }
+
   return (
-    <section className="card upload-card">
+    <section
+      className="card upload-card"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="form">
         <input
           ref={fileInputRef}
@@ -83,7 +108,10 @@ export default function JoinForm({ user }) {
           disabled={busy}
           className="visually-hidden"
         />
-        <label htmlFor="queue-file-input" className={`upload-btn ${busy ? "disabled" : ""}`}>
+        <label
+          htmlFor="queue-file-input"
+          className={`upload-btn ${busy ? "disabled" : ""} ${dragging ? "dragover" : ""}`}
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
