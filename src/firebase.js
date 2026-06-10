@@ -1,7 +1,11 @@
 // Initializes Firebase once and exports the handles the rest of the app uses.
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { firebaseConfig } from "./firebaseConfig";
 import { SCHOOL_DOMAIN } from "./config";
@@ -9,7 +13,15 @@ import { SCHOOL_DOMAIN } from "./config";
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Persistent local cache (IndexedDB): repeat visits paint the queue instantly
+// from the device while fresh data streams in, and cached reads aren't billed.
+// The multi-tab manager lets several open tabs share one cache safely; on
+// browsers without IndexedDB the SDK falls back to in-memory automatically.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
+
 export const storage = getStorage(app);
 
 export const googleProvider = new GoogleAuthProvider();
