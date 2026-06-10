@@ -19,7 +19,7 @@ import ColoursBox from "./ColoursBox.jsx";
 
 export default function QueueList({ user }) {
   const [jobs, setJobs] = useState([]);
-  const [finished, setFinished] = useState([]);
+  const [finished, setFinished] = useState({});
 
   useEffect(() => {
     // Active jobs (queued or being worked on), oldest first.
@@ -34,16 +34,29 @@ export default function QueueList({ user }) {
   }, []);
 
   useEffect(() => {
-    // Recently finished jobs (completed or problem), most recent first.
-    const qFinished = query(
-      collection(db, "jobs"),
-      where("status", "in", ["done", "rejected"]),
-      orderBy("updatedAt", "desc"),
-      limit(100)
-    );
-    return onSnapshot(qFinished, (snap) =>
-      setFinished(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
+    // Recently finished jobs: one tightly-scoped listener per machine × outcome
+    // (4 total), each fetching only the 10 jobs its box displays.
+    const unsubs = [];
+    for (const type of JOB_TYPES) {
+      for (const status of ["done", "rejected"]) {
+        const q = query(
+          collection(db, "jobs"),
+          where("type", "==", type),
+          where("status", "==", status),
+          orderBy("updatedAt", "desc"),
+          limit(10)
+        );
+        unsubs.push(
+          onSnapshot(q, (snap) => {
+            setFinished((prev) => ({
+              ...prev,
+              [`${type}|${status}`]: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+            }));
+          })
+        );
+      }
+    }
+    return () => unsubs.forEach((u) => u());
   }, []);
 
   return (
@@ -58,9 +71,8 @@ export default function QueueList({ user }) {
           position: j.status === "queued" ? ++queuedSoFar : null,
         }));
 
-        const finishedOfType = finished.filter((j) => j.type === type);
-        const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 10);
-        const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 10);
+        const completed = finished[`${type}|done`] || [];
+        const problems = finished[`${type}|rejected`] || [];
 
         return (
           <div className="queue-col" key={type}>
