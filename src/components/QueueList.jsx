@@ -157,16 +157,6 @@ function QueueRow({ job, label, position, mine }) {
           <div className="muted small">{mine ? "You" : job.ownerName}</div>
         </div>
         <div className="row-actions">
-          {job.teacherNote && (
-            <button
-              type="button"
-              className="teacher-toggle has-note"
-              onClick={() => setTeacherOpen((o) => !o)}
-              title="Note from Mr Wetherell"
-            >
-              <WarningIcon /> Teacher
-            </button>
-          )}
           <button
             type="button"
             className={`notes-toggle ${job.notes ? "has-notes" : ""} ${open ? "open" : ""}`}
@@ -184,6 +174,17 @@ function QueueRow({ job, label, position, mine }) {
               title="Delete"
             >
               <TrashIcon />
+            </button>
+          )}
+          {job.teacherNote && (
+            <button
+              type="button"
+              className="btn ghost small icon-btn teacher-icon has-note"
+              onClick={() => setTeacherOpen((o) => !o)}
+              aria-label="Teacher note"
+              title="Note from Mr Wetherell"
+            >
+              <WarningIcon />
             </button>
           )}
         </div>

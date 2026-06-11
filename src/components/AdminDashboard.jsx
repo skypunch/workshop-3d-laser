@@ -197,14 +197,6 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
           <div className="muted small">{job.ownerName}</div>
         </div>
         <div className="row-actions">
-          <button
-            type="button"
-            className={`teacher-toggle ${job.teacherNote ? "has-note" : ""}`}
-            onClick={() => setTeacherOpen((o) => !o)}
-            title="Add or edit a note for the student"
-          >
-            <WarningIcon /> Teacher
-          </button>
           {job.notes && (
             <button
               type="button"
@@ -228,6 +220,15 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
             title="Delete"
           >
             <TrashIcon />
+          </button>
+          <button
+            type="button"
+            className={`btn ghost small icon-btn teacher-icon ${job.teacherNote ? "has-note" : ""}`}
+            onClick={() => setTeacherOpen((o) => !o)}
+            aria-label="Teacher note"
+            title="Add or edit a note for the student"
+          >
+            <WarningIcon />
           </button>
         </div>
       </div>
