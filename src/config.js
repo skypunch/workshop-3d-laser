@@ -31,7 +31,9 @@ export function typeForFile(name) {
   return ext ? TYPE_BY_EXTENSION[ext] : null;
 }
 
-export const STATUSES = ["queued", "in_progress", "done", "rejected"];
+// "rejected"/Problem retired as a selectable status — issues are flagged with
+// the per-job teacher (hazard) note instead.
+export const STATUSES = ["queued", "in_progress", "done"];
 export const STATUS_LABELS = {
   queued: "Queued",
   in_progress: "In progress",

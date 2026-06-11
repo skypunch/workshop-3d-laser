@@ -150,8 +150,19 @@ function QueueRow({ job, label, position, mine }) {
           <div className="line1">
             <strong>{label}</strong>
             <span className="muted small filename">{job.fileName}</span>
-            {job.status !== "queued" && (
-              <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
+            {job.status === "in_progress" && (
+              <span className="status status-in_progress">{STATUS_LABELS.in_progress}</span>
+            )}
+            {job.teacherNote && (
+              <button
+                type="button"
+                className="btn ghost small icon-btn teacher-icon has-note"
+                onClick={() => setTeacherOpen((o) => !o)}
+                aria-label="Teacher note"
+                title="Note from Mr Wetherell"
+              >
+                <WarningIcon />
+              </button>
             )}
           </div>
           <div className="muted small">{mine ? "You" : job.ownerName}</div>
@@ -174,17 +185,6 @@ function QueueRow({ job, label, position, mine }) {
               title="Delete"
             >
               <TrashIcon />
-            </button>
-          )}
-          {job.teacherNote && (
-            <button
-              type="button"
-              className="btn ghost small icon-btn teacher-icon has-note"
-              onClick={() => setTeacherOpen((o) => !o)}
-              aria-label="Teacher note"
-              title="Note from Mr Wetherell"
-            >
-              <WarningIcon />
             </button>
           )}
         </div>
