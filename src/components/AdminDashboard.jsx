@@ -21,10 +21,12 @@ export default function AdminDashboard() {
   // Two capped listeners instead of the whole collection: the active queue is
   // naturally small, and finished history is limited to the most recent 100
   // (older entries are auto-deleted after 30 days by the cleanup function).
+  // The queue keeps queued, in-progress AND problem jobs (problem jobs stay
+  // visible in place rather than moving out). Only completed jobs leave.
   useEffect(() => {
     const qActive = query(
       collection(db, "jobs"),
-      where("status", "in", ["queued", "in_progress"]),
+      where("status", "in", ["queued", "in_progress", "rejected"]),
       orderBy("createdAt", "asc")
     );
     return onSnapshot(qActive, (snap) => {
@@ -35,7 +37,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const qFinished = query(
       collection(db, "jobs"),
-      where("status", "in", ["done", "rejected"]),
+      where("status", "==", "done"),
       orderBy("updatedAt", "desc"),
       limit(100)
     );
@@ -49,7 +51,11 @@ export default function AdminDashboard() {
 
   const visible = useMemo(() => {
     if (filter === "all") return jobs;
-    if (filter === "active") return jobs.filter((j) => j.status === "queued" || j.status === "in_progress");
+    if (filter === "active") {
+      return jobs.filter(
+        (j) => j.status === "queued" || j.status === "in_progress" || j.status === "rejected"
+      );
+    }
     return jobs.filter((j) => j.status === filter);
   }, [jobs, filter]);
 
@@ -76,18 +82,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Live counts per queue (always reflect the whole queue, ignoring the filter).
-  const counts = useMemo(() => {
-    const c = {};
-    JOB_TYPES.forEach((t) => (c[t] = { queued: 0, in_progress: 0 }));
-    jobs.forEach((j) => {
-      if (c[j.type] && (j.status === "queued" || j.status === "in_progress")) {
-        c[j.type][j.status] += 1;
-      }
-    });
-    return c;
-  }, [jobs]);
-
   return (
     <main className="stack">
       <section className="card">
@@ -105,7 +99,8 @@ export default function AdminDashboard() {
         {JOB_TYPES.map((type) => {
           const rows = visible.filter((j) => j.type === type);
           const labels = labelJobs(rows);
-          const activeCount = counts[type].queued + counts[type].in_progress;
+          // Everything in the queue (queued + in-progress + problem).
+          const activeCount = activeJobs.filter((j) => j.type === type).length;
           // Queue positions counted across ALL jobs of this type (not the filtered
           // view), so a job's number matches what students see.
           let q = 0;
@@ -115,12 +110,11 @@ export default function AdminDashboard() {
             .forEach((j) => {
               positions[j.id] = j.status === "queued" ? ++q : null;
             });
-          // Recently finished (most recent first), independent of the status filter.
-          const finishedOfType = jobs
-            .filter((j) => j.type === type && (j.status === "done" || j.status === "rejected"))
-            .sort((a, b) => finishedMs(b) - finishedMs(a));
-          const completed = finishedOfType.filter((j) => j.status === "done").slice(0, 10);
-          const problems = finishedOfType.filter((j) => j.status === "rejected").slice(0, 10);
+          // Recently completed (most recent first), independent of the status filter.
+          const completed = jobs
+            .filter((j) => j.type === type && j.status === "done")
+            .sort((a, b) => finishedMs(b) - finishedMs(a))
+            .slice(0, 10);
 
           return (
             <div className="queue-col" key={type}>
@@ -151,7 +145,6 @@ export default function AdminDashboard() {
 
               <section className="card">
                 <FinishedGroup statusKey="done" jobs={completed} />
-                <FinishedGroup statusKey="rejected" jobs={problems} />
               </section>
             </div>
           );

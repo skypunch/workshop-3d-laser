@@ -22,10 +22,11 @@ export default function QueueList({ user }) {
   const [finished, setFinished] = useState({});
 
   useEffect(() => {
-    // Active jobs (queued or being worked on), oldest first.
+    // The queue keeps queued, in-progress AND problem jobs — a problem job stays
+    // in place (flagged) rather than disappearing. Only completed jobs leave.
     const qActive = query(
       collection(db, "jobs"),
-      where("status", "in", ["queued", "in_progress"]),
+      where("status", "in", ["queued", "in_progress", "rejected"]),
       orderBy("createdAt", "asc")
     );
     return onSnapshot(qActive, (snap) =>
@@ -34,27 +35,24 @@ export default function QueueList({ user }) {
   }, []);
 
   useEffect(() => {
-    // Recently finished jobs: one tightly-scoped listener per machine × outcome
-    // (4 total), each fetching only the 10 jobs its box displays.
+    // Recently completed jobs: one scoped listener per machine (10 each).
     const unsubs = [];
     for (const type of JOB_TYPES) {
-      for (const status of ["done", "rejected"]) {
-        const q = query(
-          collection(db, "jobs"),
-          where("type", "==", type),
-          where("status", "==", status),
-          orderBy("updatedAt", "desc"),
-          limit(10)
-        );
-        unsubs.push(
-          onSnapshot(q, (snap) => {
-            setFinished((prev) => ({
-              ...prev,
-              [`${type}|${status}`]: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
-            }));
-          })
-        );
-      }
+      const q = query(
+        collection(db, "jobs"),
+        where("type", "==", type),
+        where("status", "==", "done"),
+        orderBy("updatedAt", "desc"),
+        limit(10)
+      );
+      unsubs.push(
+        onSnapshot(q, (snap) => {
+          setFinished((prev) => ({
+            ...prev,
+            [type]: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+          }));
+        })
+      );
     }
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -71,8 +69,7 @@ export default function QueueList({ user }) {
           position: j.status === "queued" ? ++queuedSoFar : null,
         }));
 
-        const completed = finished[`${type}|done`] || [];
-        const problems = finished[`${type}|rejected`] || [];
+        const completed = finished[type] || [];
 
         return (
           <div className="queue-col" key={type}>
@@ -101,7 +98,6 @@ export default function QueueList({ user }) {
 
             <section className="card">
               <FinishedGroup statusKey="done" jobs={completed} />
-              <FinishedGroup statusKey="rejected" jobs={problems} />
             </section>
           </div>
         );
@@ -147,7 +143,9 @@ function QueueRow({ job, label, position, mine }) {
   return (
     <li className={`queue-row ${mine ? "mine" : ""}`}>
       <div className="row-main">
-        <span className="pos">{position ? `#${position}` : "▶"}</span>
+        <span className="pos">
+          {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
+        </span>
         <div className="grow">
           <div className="line1">
             <strong>{label}</strong>
@@ -177,7 +175,7 @@ function QueueRow({ job, label, position, mine }) {
           >
             NOTES
           </button>
-          {mine && job.status === "queued" && (
+          {mine && (job.status === "queued" || job.status === "rejected") && (
             <button
               type="button"
               className="btn ghost small danger icon-btn"
