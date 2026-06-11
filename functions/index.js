@@ -14,12 +14,17 @@ initializeApp();
 const PUSHOVER_TOKEN = defineSecret("PUSHOVER_TOKEN");
 const PUSHOVER_USER = defineSecret("PUSHOVER_USER");
 
-// Same preferred-name logic as the web app (e.g. "Chun Hei (Kasper) LAU" → "Kasper").
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Same preferred-name logic as the web app: prefer a name in () or [], title-cased
+// (e.g. "Chun Hei (Kasper) LAU" → "Kasper", "Aisha [SUFI] Dutt" → "Sufi").
 function preferredName(name) {
   const s = (name || "").trim();
   if (!s) return "Someone";
-  const paren = s.match(/\(([^)]+)\)/);
-  if (paren) return paren[1].trim();
+  const m = s.match(/\(([^)]+)\)/) || s.match(/\[([^\]]+)\]/);
+  if (m) return toTitleCase(m[1].trim());
   return s.split(/\s+/)[0];
 }
 

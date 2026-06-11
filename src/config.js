@@ -39,13 +39,19 @@ export const STATUS_LABELS = {
   rejected: "Problem",
 };
 
+// "SUFI" → "Sufi", "anne-marie" → "Anne-Marie".
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // Best-effort preferred/first name from a display name (or email if no name).
 export function firstName(name) {
   let s = (name || "").trim();
   if (!s) return "Someone";
-  // Preferred name in parentheses wins, e.g. "Chun Hei (Kasper) LAU" → "Kasper".
-  const preferred = s.match(/\(([^)]+)\)/);
-  if (preferred) return preferred[1].trim();
+  // Preferred name in () or [] wins and is title-cased, e.g.
+  // "Chun Hei (Kasper) LAU" → "Kasper", "Aisha [SUFI] Dutt" → "Sufi".
+  const preferred = s.match(/\(([^)]+)\)/) || s.match(/\[([^\]]+)\]/);
+  if (preferred) return toTitleCase(preferred[1].trim());
   if (s.includes("@")) {
     s = s.split("@")[0].split(/[._-]/)[0]; // e.g. "marcus.wetherell@…" → "marcus"
   } else {
