@@ -214,6 +214,26 @@ body {
 /* Right-aligned NOTES + DELETE cluster */
 .row-actions { display: flex; align-items: center; gap: 8px; }
 
+/* TEACHER note pill — warning style. Mid-grey when empty (admin only),
+   bright yellow once a note exists. */
+.teacher-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  font: inherit; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent; border-radius: 999px; padding: 2px 9px;
+  background: #6b7280; color: #f5f6f7;
+}
+.teacher-toggle svg { width: 13px; height: 13px; }
+.teacher-toggle.has-note { background: #ffd21a; color: #3a2c00; }
+
+.teacher-panel {
+  background: var(--card); border: 1px solid rgba(255, 210, 26, .45); border-radius: 10px; padding: 10px;
+}
+.teacher-panel textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font: inherit; resize: vertical;
+}
+.teacher-panel p { margin: 0; white-space: pre-wrap; }
+
 .notes-panel {
   background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
 }

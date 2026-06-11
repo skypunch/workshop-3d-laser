@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, serverTi
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
-import { TrashIcon } from "./icons.jsx";
+import { TrashIcon, WarningIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
 
@@ -163,6 +163,27 @@ export default function AdminDashboard() {
 
 function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
   const [open, setOpen] = useState(false);
+  const [teacherOpen, setTeacherOpen] = useState(false);
+  const [tDraft, setTDraft] = useState(job.teacherNote || "");
+  const [tSaving, setTSaving] = useState(false);
+  const [tTouched, setTTouched] = useState(false);
+  const tDirty = tDraft.trim() !== (job.teacherNote || "");
+
+  // Auto-save the teacher note ~0.7s after typing stops (same feel as Notes).
+  useEffect(() => {
+    if (!tTouched || !tDirty) return;
+    const tmr = setTimeout(async () => {
+      setTSaving(true);
+      try {
+        await updateDoc(doc(db, "jobs", job.id), { teacherNote: tDraft.trim() });
+      } catch (e) {
+        console.error("Could not save teacher note:", e);
+      } finally {
+        setTSaving(false);
+      }
+    }, 700);
+    return () => clearTimeout(tmr);
+  }, [tDraft, tTouched]);
 
   return (
     <li className="queue-row">
@@ -183,6 +204,14 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
           <div className="muted small">{job.ownerName}</div>
         </div>
         <div className="row-actions">
+          <button
+            type="button"
+            className={`teacher-toggle ${job.teacherNote ? "has-note" : ""}`}
+            onClick={() => setTeacherOpen((o) => !o)}
+            title="Add or edit a note for the student"
+          >
+            <WarningIcon /> Teacher
+          </button>
           {job.notes && (
             <button
               type="button"
@@ -209,6 +238,26 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
           </button>
         </div>
       </div>
+
+      {teacherOpen && (
+        <div className="teacher-panel">
+          <textarea
+            value={tDraft}
+            onChange={(e) => {
+              setTTouched(true);
+              setTDraft(e.target.value);
+            }}
+            rows={2}
+            maxLength={300}
+            placeholder="Note to the student (e.g. why this was rejected, or what to fix)…"
+          />
+          <div className="notes-actions">
+            <span className="muted small">
+              {tSaving || tDirty ? "Saving…" : tTouched ? "Saved ✓" : ""}
+            </span>
+          </div>
+        </div>
+      )}
 
       {open && job.notes && (
         <div className="notes-panel">

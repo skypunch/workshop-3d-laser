@@ -13,7 +13,7 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUS_LABELS, labelJobs } from "../config";
-import { TrashIcon } from "./icons.jsx";
+import { TrashIcon, WarningIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
 
@@ -112,6 +112,7 @@ export default function QueueList({ user }) {
 
 function QueueRow({ job, label, position, mine }) {
   const [open, setOpen] = useState(false);
+  const [teacherOpen, setTeacherOpen] = useState(false);
   const [draft, setDraft] = useState(job.notes || "");
   const [saving, setSaving] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -158,6 +159,16 @@ function QueueRow({ job, label, position, mine }) {
           <div className="muted small">{mine ? "You" : job.ownerName}</div>
         </div>
         <div className="row-actions">
+          {job.teacherNote && (
+            <button
+              type="button"
+              className="teacher-toggle has-note"
+              onClick={() => setTeacherOpen((o) => !o)}
+              title="Note from Mr Wetherell"
+            >
+              <WarningIcon /> Teacher
+            </button>
+          )}
           <button
             type="button"
             className={`notes-toggle ${job.notes ? "has-notes" : ""} ${open ? "open" : ""}`}
@@ -179,6 +190,12 @@ function QueueRow({ job, label, position, mine }) {
           )}
         </div>
       </div>
+
+      {teacherOpen && job.teacherNote && (
+        <div className="teacher-panel">
+          <p>{job.teacherNote}</p>
+        </div>
+      )}
 
       {open && (
         <div className="notes-panel">
