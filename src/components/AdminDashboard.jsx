@@ -190,7 +190,7 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
             <button className="btn ghost small file-link" onClick={() => onDownload(job)} title="Download file">
               ⬇ {job.fileName}
             </button>
-            {job.status !== "queued" && (
+            {(job.status === "in_progress" || job.status === "done") && (
               <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
             )}
           </div>
