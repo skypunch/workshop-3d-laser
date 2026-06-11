@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0e8a43"/>
+  <!-- isometric cube: white top face, two lighter side faces -->
+  <path d="M16 7 L24 11.5 L16 16 L8 11.5 Z" fill="#ffffff"/>
+  <path d="M8 11.5 L16 16 L16 25 L8 20.5 Z" fill="#d6efe0"/>
+  <path d="M24 11.5 L16 16 L16 25 L24 20.5 Z" fill="#aedcc2"/>
+</svg>
