@@ -66,7 +66,15 @@ export default function AdminDashboard() {
   async function download(job) {
     try {
       const url = await getDownloadURL(ref(storage, job.filePath));
-      window.open(url, "_blank", "noopener");
+      // Anchor-click (not window.open) so there's no popup: the file is stored
+      // with Content-Disposition: attachment, so this downloads in place.
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = job.fileName || "";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch (e) {
       alert(e?.message || "Could not get the file.");
     }
