@@ -16,13 +16,15 @@ function finishedMs(j) {
 export default function AdminDashboard() {
   const [activeJobs, setActiveJobs] = useState([]);
   const [finishedJobs, setFinishedJobs] = useState([]);
-  const [filter, setFilter] = useState("active"); // active | all | queued | in_progress | done | rejected
+  const [filter, setFilter] = useState("active"); // active | all | queued | in_progress | done | batch
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+
+  const isBatch = filter === "batch";
 
   // Two capped listeners instead of the whole collection: the active queue is
   // naturally small, and finished history is limited to the most recent 100
   // (older entries are auto-deleted after 30 days by the cleanup function).
-  // The queue keeps queued, in-progress AND problem jobs (problem jobs stay
-  // visible in place rather than moving out). Only completed jobs leave.
+  // The queue keeps queued, in-progress AND problem jobs; only completed leave.
   useEffect(() => {
     const qActive = query(
       collection(db, "jobs"),
@@ -46,12 +48,16 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  // Active first (oldest-first), then finished (most recent first).
+  // Clear any selection when switching tabs.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filter]);
+
   const jobs = useMemo(() => [...activeJobs, ...finishedJobs], [activeJobs, finishedJobs]);
 
   const visible = useMemo(() => {
     if (filter === "all") return jobs;
-    if (filter === "active") {
+    if (filter === "active" || filter === "batch") {
       return jobs.filter(
         (j) => j.status === "queued" || j.status === "in_progress" || j.status === "rejected"
       );
@@ -59,8 +65,65 @@ export default function AdminDashboard() {
     return jobs.filter((j) => j.status === filter);
   }, [jobs, filter]);
 
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   async function setStatus(job, status) {
     await updateDoc(doc(db, "jobs", job.id), { status, updatedAt: serverTimestamp() });
+  }
+
+  // Batch: apply a status to every selected job of this machine.
+  async function applyStatusToSelected(type, status) {
+    const ids = activeJobs.filter((j) => j.type === type && selectedIds.has(j.id)).map((j) => j.id);
+    if (ids.length === 0) {
+      alert("Select one or more jobs first (tick the checkboxes).");
+      return;
+    }
+    try {
+      await Promise.all(
+        ids.map((id) => updateDoc(doc(db, "jobs", id), { status, updatedAt: serverTimestamp() }))
+      );
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      });
+    } catch (e) {
+      alert(e?.message || "Could not update the selected jobs.");
+    }
+  }
+
+  // Batch: delete every selected job of this machine (and its file).
+  async function deleteSelected(type) {
+    const toDelete = activeJobs.filter((j) => j.type === type && selectedIds.has(j.id));
+    if (toDelete.length === 0) {
+      alert("Select one or more jobs first (tick the checkboxes).");
+      return;
+    }
+    if (!confirm(`Delete ${toDelete.length} selected ${type} job(s) and their files? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await Promise.all(
+        toDelete.map(async (j) => {
+          if (j.filePath) await deleteObject(ref(storage, j.filePath)).catch(() => {});
+          await deleteDoc(doc(db, "jobs", j.id));
+        })
+      );
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        toDelete.forEach((j) => next.delete(j.id));
+        return next;
+      });
+    } catch (e) {
+      alert(e?.message || "Could not delete the selected jobs.");
+    }
   }
 
   async function download(job) {
@@ -91,7 +154,7 @@ export default function AdminDashboard() {
   }
 
   // NUKE: permanently delete EVERY job of this machine (active + completed) and
-  // their uploaded files. Irreversible — confirm hard.
+  // their uploaded files. Irreversible — requires typing NUKE.
   async function nuke(type) {
     const typed = prompt(
       `☢️  NUKE the entire ${type} queue?\n\n` +
@@ -113,6 +176,7 @@ export default function AdminDashboard() {
           await deleteDoc(d.ref);
         })
       );
+      setSelectedIds(new Set());
     } catch (e) {
       alert(e?.message || "Could not clear the queue.");
     }
@@ -123,9 +187,9 @@ export default function AdminDashboard() {
       <section className="card">
         <h2>Admin dashboard</h2>
         <div className="filters">
-          {["active", "all", ...STATUSES].map((f) => (
+          {["active", "all", ...STATUSES, "batch"].map((f) => (
             <button key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
-              {f === "active" ? "Active" : f === "all" ? "All" : STATUS_LABELS[f]}
+              {f === "active" ? "Active" : f === "all" ? "All" : f === "batch" ? "Batch" : STATUS_LABELS[f]}
             </button>
           ))}
         </div>
@@ -135,10 +199,8 @@ export default function AdminDashboard() {
         {JOB_TYPES.map((type) => {
           const rows = visible.filter((j) => j.type === type);
           const labels = labelJobs(rows);
-          // Everything in the queue (queued + in-progress + problem).
           const activeCount = activeJobs.filter((j) => j.type === type).length;
-          // Queue positions counted across ALL jobs of this type (not the filtered
-          // view), so a job's number matches what students see.
+          // Queue positions counted across ALL jobs of this type.
           let q = 0;
           const positions = {};
           jobs
@@ -146,7 +208,6 @@ export default function AdminDashboard() {
             .forEach((j) => {
               positions[j.id] = j.status === "queued" ? ++q : null;
             });
-          // Recently completed (most recent first), independent of the status filter.
           const completed = jobs
             .filter((j) => j.type === type && j.status === "done")
             .sort((a, b) => finishedMs(b) - finishedMs(a))
@@ -160,8 +221,48 @@ export default function AdminDashboard() {
                   {activeCount > 0 && <span className="queue-count">{activeCount} in queue</span>}
                   {type === "3D Printing" && <ColoursBox editable={true} />}
                 </header>
+
+                {isBatch && (
+                  <div className="batch-toolbar">
+                    <select
+                      className="status-select"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) applyStatusToSelected(type, e.target.value);
+                      }}
+                    >
+                      <option value="" disabled>
+                        Set selected to…
+                      </option>
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_LABELS[s]}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn ghost small danger icon-btn"
+                      onClick={() => deleteSelected(type)}
+                      aria-label="Delete selected jobs"
+                      title="Delete selected jobs"
+                    >
+                      <TrashIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn ghost small danger icon-btn"
+                      onClick={() => nuke(type)}
+                      aria-label={`Nuke the ${type} queue`}
+                      title={`Delete ALL ${type} jobs (active + completed)`}
+                    >
+                      <NukeIcon />
+                    </button>
+                  </div>
+                )}
+
                 {rows.length === 0 ? (
-                  <p className="muted">Nothing here.</p>
+                  <p className="muted">{isBatch ? "Queue is empty." : "Nothing here."}</p>
                 ) : (
                   <ul className="queue">
                     {rows.map((j) => (
@@ -170,6 +271,9 @@ export default function AdminDashboard() {
                         job={j}
                         label={labels[j.id]}
                         position={positions[j.id]}
+                        batchMode={isBatch}
+                        selected={selectedIds.has(j.id)}
+                        onToggleSelect={toggleSelect}
                         onDownload={download}
                         onStatus={setStatus}
                         onRemove={remove}
@@ -179,21 +283,11 @@ export default function AdminDashboard() {
                 )}
               </section>
 
-              <section className="card">
-                <FinishedGroup statusKey="done" jobs={completed} />
-              </section>
-
-              <div className="nuke-row">
-                <button
-                  type="button"
-                  className="nuke-btn"
-                  onClick={() => nuke(type)}
-                  aria-label={`Nuke the ${type} queue`}
-                  title={`Delete ALL ${type} jobs (active + completed)`}
-                >
-                  <NukeIcon />
-                </button>
-              </div>
+              {!isBatch && (
+                <section className="card">
+                  <FinishedGroup statusKey="done" jobs={completed} />
+                </section>
+              )}
             </div>
           );
         })}
@@ -202,7 +296,7 @@ export default function AdminDashboard() {
   );
 }
 
-function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
+function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, onDownload, onStatus, onRemove }) {
   const [open, setOpen] = useState(false);
   const [teacherOpen, setTeacherOpen] = useState(false);
   const [tDraft, setTDraft] = useState(job.teacherNote || "");
@@ -230,7 +324,21 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
     <li className="queue-row">
       <div className="row-main">
         <span className="pos">
-          {position ? `#${position}` : job.status === "in_progress" ? "▶" : "—"}
+          {batchMode ? (
+            <input
+              type="checkbox"
+              className="batch-check"
+              checked={selected}
+              onChange={() => onToggleSelect(job.id)}
+              aria-label="Select job"
+            />
+          ) : position ? (
+            `#${position}`
+          ) : job.status === "in_progress" ? (
+            "▶"
+          ) : (
+            "—"
+          )}
         </span>
         <div className="grow">
           <div className="line1">
@@ -254,21 +362,25 @@ function AdminRow({ job, label, position, onDownload, onStatus, onRemove }) {
               NOTES
             </button>
           )}
-          <select className="status-select" value={job.status} onChange={(e) => onStatus(job, e.target.value)}>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-          <button
-            className="btn ghost small danger icon-btn"
-            onClick={() => onRemove(job)}
-            aria-label="Delete job"
-            title="Delete"
-          >
-            <TrashIcon />
-          </button>
+          {!batchMode && (
+            <select className="status-select" value={job.status} onChange={(e) => onStatus(job, e.target.value)}>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          )}
+          {!batchMode && (
+            <button
+              className="btn ghost small danger icon-btn"
+              onClick={() => onRemove(job)}
+              aria-label="Delete job"
+              title="Delete"
+            >
+              <TrashIcon />
+            </button>
+          )}
           <button
             type="button"
             className={`btn ghost small icon-btn teacher-icon ${job.teacherNote ? "has-note" : ""}`}
