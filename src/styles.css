@@ -38,7 +38,9 @@ body {
   gap: 16px; padding: 12px 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
   flex-wrap: wrap;
 }
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 16px; }
+.header-machines { display: flex; align-items: center; gap: 12px; }
+.header-machines img { height: 52px; width: auto; object-fit: contain; }
 
 /* "Available colours" box, sitting inline to the right of the queue title */
 .colours-inline {

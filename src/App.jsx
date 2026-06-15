@@ -77,6 +77,10 @@ export default function App() {
             <h1>Workshop 3D Printing and Laser Cutting Queue</h1>
             <span className="url-mono">tinyurl.com/ehprintcut</span>
           </div>
+          <div className="header-machines">
+            <img src="./3dprinter.png" alt="3D printer" />
+            <img src="./lasercutter.png" alt="Laser cutter" />
+          </div>
         </div>
         {user && (
           <div className="userbox">
