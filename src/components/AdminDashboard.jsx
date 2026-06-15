@@ -93,12 +93,17 @@ export default function AdminDashboard() {
   // NUKE: permanently delete EVERY job of this machine (active + completed) and
   // their uploaded files. Irreversible — confirm hard.
   async function nuke(type) {
-    const ok = confirm(
+    const typed = prompt(
       `☢️  NUKE the entire ${type} queue?\n\n` +
         `This permanently deletes ALL ${type} jobs — both the active queue AND the ` +
-        `completed history — and their uploaded files. This cannot be undone.`
+        `completed history — and their uploaded files. This cannot be undone.\n\n` +
+        `Type NUKE to confirm:`
     );
-    if (!ok) return;
+    if (typed === null) return; // cancelled
+    if (typed.trim().toUpperCase() !== "NUKE") {
+      alert('Cancelled — you didn\'t type "NUKE".');
+      return;
+    }
     try {
       const snap = await getDocs(query(collection(db, "jobs"), where("type", "==", type)));
       await Promise.all(
