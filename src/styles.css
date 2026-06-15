@@ -264,6 +264,16 @@ body {
   background: var(--card-2); border: 1px solid var(--border); color: var(--text);
   border-radius: 8px; padding: 4px 6px; font: inherit; font-size: 12px;
 }
+
+/* NUKE — wipe an entire machine's queue (admin) */
+.nuke-row { display: flex; justify-content: center; padding: 2px 0 4px; }
+.nuke-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--danger); background: transparent; color: var(--danger);
+  border-radius: 10px; padding: 8px 14px; cursor: pointer;
+}
+.nuke-btn:hover { background: var(--danger); color: #fff; }
+.nuke-btn svg { width: 22px; height: 22px; display: block; }
 .admin-notes { margin-top: 6px; }
 .notes-reveal { margin: 6px 0 0; max-width: 260px; font-size: 13px; color: var(--text); white-space: pre-wrap; }
 .status-row-done { opacity: .55; }

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
-import { TrashIcon, WarningIcon } from "./icons.jsx";
+import { TrashIcon, WarningIcon, NukeIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
 
@@ -90,6 +90,29 @@ export default function AdminDashboard() {
     }
   }
 
+  // NUKE: permanently delete EVERY job of this machine (active + completed) and
+  // their uploaded files. Irreversible — confirm hard.
+  async function nuke(type) {
+    const ok = confirm(
+      `☢️  NUKE the entire ${type} queue?\n\n` +
+        `This permanently deletes ALL ${type} jobs — both the active queue AND the ` +
+        `completed history — and their uploaded files. This cannot be undone.`
+    );
+    if (!ok) return;
+    try {
+      const snap = await getDocs(query(collection(db, "jobs"), where("type", "==", type)));
+      await Promise.all(
+        snap.docs.map(async (d) => {
+          const data = d.data();
+          if (data.filePath) await deleteObject(ref(storage, data.filePath)).catch(() => {});
+          await deleteDoc(d.ref);
+        })
+      );
+    } catch (e) {
+      alert(e?.message || "Could not clear the queue.");
+    }
+  }
+
   return (
     <main className="stack">
       <section className="card">
@@ -154,6 +177,18 @@ export default function AdminDashboard() {
               <section className="card">
                 <FinishedGroup statusKey="done" jobs={completed} />
               </section>
+
+              <div className="nuke-row">
+                <button
+                  type="button"
+                  className="nuke-btn"
+                  onClick={() => nuke(type)}
+                  aria-label={`Nuke the ${type} queue`}
+                  title={`Delete ALL ${type} jobs (active + completed)`}
+                >
+                  <NukeIcon />
+                </button>
+              </div>
             </div>
           );
         })}

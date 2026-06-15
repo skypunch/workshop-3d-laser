@@ -1,3 +1,13 @@
+export function NukeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+      <ellipse cx="12" cy="5.5" rx="7.5" ry="3.5" />
+      <path d="M9 8.6 C10.7 9.9 13.3 9.9 15 8.6 L13.7 17.5 C13.7 18.7 13 19.5 12 19.5 C11 19.5 10.3 18.7 10.3 17.5 Z" />
+      <ellipse cx="12" cy="20.5" rx="5" ry="1.6" />
+    </svg>
+  );
+}
+
 export function WarningIcon() {
   return (
     <svg
