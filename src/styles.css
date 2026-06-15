@@ -60,9 +60,7 @@ body {
 }
 .topbar h1 {
   font-size: 18px; margin: 0;
-  display: inline; color: #14304d; background: #cfe3f7;
-  padding: 2px 8px; border-radius: 4px; line-height: 1.5;
-  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  color: #f4f4f0; background: transparent;
 }
 .url-mono {
   font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
