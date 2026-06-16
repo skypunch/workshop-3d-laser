@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUS_LABELS, labelJobs, isStaffEmail } from "../config";
+import { JOB_TYPES, STATUS_LABELS, labelJobs, isStaffEmail, isAdminEmail } from "../config";
 import { TrashIcon, WarningIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
@@ -191,7 +191,7 @@ function QueueRow({ job, label, position, mine }) {
       </div>
 
       <div className={`owner-name muted${isStaffEmail(job.ownerEmail) ? " staff-name" : ""}`}>
-        {mine ? "You" : job.ownerName}
+        {mine ? "You" : isAdminEmail(job.ownerEmail) ? "Mr Wetherell" : job.ownerName}
       </div>
 
       {teacherOpen && job.teacherNote && (
