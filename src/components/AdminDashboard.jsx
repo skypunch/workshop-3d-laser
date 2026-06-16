@@ -346,8 +346,9 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
         </span>
         <div className="grow">
           <div className="line1">
-            <button className="btn ghost small file-link" onClick={() => onDownload(job)} title="Download file">
-              ⬇ {job.fileName}
+            <button className="file-link" onClick={() => onDownload(job)} title="Download file">
+              <span className="fname">{job.fileName}</span>
+              <span className="dl-arrow" aria-hidden="true">⬇</span>
             </button>
           </div>
         </div>
