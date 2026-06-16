@@ -346,8 +346,8 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
             <button className="btn ghost small file-link" onClick={() => onDownload(job)} title="Download file">
               ⬇ {job.fileName}
             </button>
-            {(job.status === "in_progress" || job.status === "done") && (
-              <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
+            {job.status === "done" && (
+              <span className="status status-done">{STATUS_LABELS.done}</span>
             )}
           </div>
           <div className="owner-name muted">{job.ownerName}</div>
