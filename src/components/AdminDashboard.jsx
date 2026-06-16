@@ -350,7 +350,6 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
               <span className="status status-done">{STATUS_LABELS.done}</span>
             )}
           </div>
-          <div className="owner-name muted">{job.ownerName}</div>
         </div>
         <div className="row-actions">
           {job.notes && (
@@ -392,6 +391,8 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
           </button>
         </div>
       </div>
+
+      <div className="owner-name muted">{job.ownerName}</div>
 
       {teacherOpen && (
         <div className="teacher-panel">

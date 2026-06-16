@@ -165,7 +165,6 @@ function QueueRow({ job, label, position, mine }) {
               </button>
             )}
           </div>
-          <div className="owner-name muted">{mine ? "You" : job.ownerName}</div>
         </div>
         <div className="row-actions">
           <button
@@ -189,6 +188,8 @@ function QueueRow({ job, label, position, mine }) {
           )}
         </div>
       </div>
+
+      <div className="owner-name muted">{mine ? "You" : job.ownerName}</div>
 
       {teacherOpen && job.teacherNote && (
         <div className="teacher-panel">

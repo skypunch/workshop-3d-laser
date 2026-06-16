@@ -193,8 +193,9 @@ body {
 /* Fixed-width name column so the filenames line up vertically across rows. */
 .line1 > strong { flex: 0 0 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .filename { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Smaller owner name shown under each job. */
-.owner-name { font-size: 10px; line-height: 1.3; }
+/* Smaller owner name, on its own line under the main row (indented past the
+   position column so it sits under the name). Negative margin tucks it close. */
+.owner-name { font-size: 10px; line-height: 1.3; margin-top: -6px; padding-left: 50px; }
 
 .tag {
   font-size: 11px; background: var(--card); border: 1px solid var(--border);
