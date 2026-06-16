@@ -1,10 +1,15 @@
 import { useRef, useState } from "react";
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
+import { addDoc, collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { ACCEPTED_EXTENSIONS, MAX_FILE_MB, typeForFile, firstName, TYPE_FILE_LABEL } from "../config";
-
-const ACTIVE_STATUSES = ["queued", "in_progress", "rejected"];
+import {
+  ACCEPTED_EXTENSIONS,
+  MAX_FILE_MB,
+  typeForFile,
+  firstName,
+  TYPE_FILE_LABEL,
+  TYPE_COUNTER_FIELD,
+} from "../config";
 
 export default function JoinForm({ user }) {
   const [busy, setBusy] = useState(false);
@@ -42,13 +47,16 @@ export default function JoinForm({ user }) {
       const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
       const label = TYPE_FILE_LABEL[type] || type;
       const name = firstName(user.displayName || user.email);
-      const ownSnap = await getDocs(
-        query(collection(db, "jobs"), where("ownerUid", "==", user.uid))
-      );
-      const existing = ownSnap.docs
-        .map((d) => d.data())
-        .filter((j) => j.type === type && ACTIVE_STATUSES.includes(j.status)).length;
-      const n = existing + 1;
+      // Lifetime per-student, per-type job number — persists across completions
+      // and deletions via an atomic counter document (counters/{uid}).
+      const counterRef = doc(db, "counters", user.uid);
+      const field = TYPE_COUNTER_FIELD[type];
+      const n = await runTransaction(db, async (tx) => {
+        const snap = await tx.get(counterRef);
+        const next = (snap.exists() ? snap.data()[field] || 0 : 0) + 1;
+        tx.set(counterRef, { [field]: next }, { merge: true });
+        return next;
+      });
       const friendlyName = (n === 1 ? `${label} - ${name}` : `${label} job ${n} - ${name}`) + ext;
 
       // 1) Upload the file to Cloud Storage under this user's folder.

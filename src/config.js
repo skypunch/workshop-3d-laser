@@ -25,6 +25,13 @@ export const TYPE_FILE_LABEL = {
   "Laser Cutting": "Laser cut",
 };
 
+// Field name in each student's counters/{uid} doc holding their lifetime job
+// count per machine type (used to number uploaded filenames).
+export const TYPE_COUNTER_FIELD = {
+  "3D Printing": "printCount",
+  "Laser Cutting": "laserCount",
+};
+
 // Display order of the two queues.
 export const JOB_TYPES = ["3D Printing", "Laser Cutting"];
 export const ACCEPTED_EXTENSIONS = Object.keys(TYPE_BY_EXTENSION);

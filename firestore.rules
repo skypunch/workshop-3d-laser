@@ -46,5 +46,11 @@ service cloud.firestore {
       allow read: if isSchool() || isAdmin();
       allow write: if isAdmin();
     }
+
+    // Per-student lifetime job counters (used to number uploaded filenames).
+    // A student can only read/increment their own. Cosmetic, so kept simple.
+    match /counters/{userId} {
+      allow read, write: if isSchool() && request.auth.uid == userId;
+    }
   }
 }
