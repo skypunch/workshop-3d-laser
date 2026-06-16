@@ -187,7 +187,7 @@ export default function AdminDashboard() {
       <section className="card">
         <h2>Admin dashboard</h2>
         <div className="filters">
-          {["active", "all", ...STATUSES, "batch"].map((f) => (
+          {["active", "all", ...STATUSES.filter((s) => s !== "queued"), "batch"].map((f) => (
             <button key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
               {f === "active" ? "Active" : f === "all" ? "All" : f === "batch" ? "Batch" : STATUS_LABELS[f]}
             </button>
