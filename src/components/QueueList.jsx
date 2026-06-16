@@ -167,14 +167,16 @@ function QueueRow({ job, label, position, mine }) {
           </div>
         </div>
         <div className="row-actions">
-          <button
-            type="button"
-            className={`notes-toggle ${job.notes ? "has-notes" : ""} ${open ? "open" : ""}`}
-            onClick={() => setOpen((o) => !o)}
-            title={mine ? "Add or edit notes for Mr Wetherell" : "View notes"}
-          >
-            NOTES
-          </button>
+          {mine && (
+            <button
+              type="button"
+              className={`notes-toggle ${job.notes ? "has-notes" : ""} ${open ? "open" : ""}`}
+              onClick={() => setOpen((o) => !o)}
+              title="Add or edit notes for Mr Wetherell"
+            >
+              NOTES
+            </button>
+          )}
           {mine && (job.status === "queued" || job.status === "rejected") && (
             <button
               type="button"
