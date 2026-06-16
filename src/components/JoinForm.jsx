@@ -57,7 +57,7 @@ export default function JoinForm({ user }) {
         tx.set(counterRef, { [field]: next }, { merge: true });
         return next;
       });
-      const friendlyName = (n === 1 ? `${label} - ${name}` : `${label} job ${n} - ${name}`) + ext;
+      const friendlyName = `${label} job ${n} - ${name}${ext}`;
 
       // 1) Upload the file to Cloud Storage under this user's folder.
       const safeName = friendlyName.replace(/[^a-zA-Z0-9._-]/g, "_");
