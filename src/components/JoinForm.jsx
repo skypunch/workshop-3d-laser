@@ -7,6 +7,7 @@ import {
   MAX_FILE_MB,
   typeForFile,
   firstName,
+  isAdminEmail,
   TYPE_FILE_LABEL,
   TYPE_COUNTER_FIELD,
 } from "../config";
@@ -41,23 +42,29 @@ export default function JoinForm({ user }) {
 
     setBusy(true);
     try {
-      // Build a friendly name: "<label> - <preferred name>.<ext>", numbered
-      // ("<label> job 2 - …") if this student already has active jobs of this
-      // type in the queue. Completed jobs don't count.
+      // Build a friendly name: "<label> job <n> - <preferred name>.<ext>", where
+      // <n> is the student's lifetime per-type job number. Admin's own uploads
+      // get a fixed "<label> job - Mr Wetherell.<ext>" with no number.
       const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
       const label = TYPE_FILE_LABEL[type] || type;
-      const name = firstName(user.displayName || user.email);
-      // Lifetime per-student, per-type job number — persists across completions
-      // and deletions via an atomic counter document (counters/{uid}).
-      const counterRef = doc(db, "counters", user.uid);
-      const field = TYPE_COUNTER_FIELD[type];
-      const n = await runTransaction(db, async (tx) => {
-        const snap = await tx.get(counterRef);
-        const next = (snap.exists() ? snap.data()[field] || 0 : 0) + 1;
-        tx.set(counterRef, { [field]: next }, { merge: true });
-        return next;
-      });
-      const friendlyName = `${label} job ${n} - ${name}${ext}`;
+
+      let friendlyName;
+      if (isAdminEmail(user.email)) {
+        friendlyName = `${label} job - Mr Wetherell${ext}`;
+      } else {
+        const name = firstName(user.displayName || user.email);
+        // Lifetime per-student, per-type job number — persists across completions
+        // and deletions via an atomic counter document (counters/{uid}).
+        const counterRef = doc(db, "counters", user.uid);
+        const field = TYPE_COUNTER_FIELD[type];
+        const n = await runTransaction(db, async (tx) => {
+          const snap = await tx.get(counterRef);
+          const next = (snap.exists() ? snap.data()[field] || 0 : 0) + 1;
+          tx.set(counterRef, { [field]: next }, { merge: true });
+          return next;
+        });
+        friendlyName = `${label} job ${n} - ${name}${ext}`;
+      }
 
       // 1) Upload the file to Cloud Storage under this user's folder.
       const safeName = friendlyName.replace(/[^a-zA-Z0-9._-]/g, "_");
