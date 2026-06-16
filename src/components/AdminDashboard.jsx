@@ -350,7 +350,7 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
               <span className={`status status-${job.status}`}>{STATUS_LABELS[job.status]}</span>
             )}
           </div>
-          <div className="muted small">{job.ownerName}</div>
+          <div className="owner-name muted">{job.ownerName}</div>
         </div>
         <div className="row-actions">
           {job.notes && (
