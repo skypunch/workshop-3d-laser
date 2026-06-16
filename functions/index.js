@@ -1,10 +1,11 @@
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import nodemailer from "nodemailer";
 
 initializeApp();
 
@@ -13,6 +14,10 @@ initializeApp();
 //   firebase functions:secrets:set PUSHOVER_USER
 const PUSHOVER_TOKEN = defineSecret("PUSHOVER_TOKEN");
 const PUSHOVER_USER = defineSecret("PUSHOVER_USER");
+
+// Gmail/Workspace address + app password used to send completion emails.
+const EMAIL_USER = defineSecret("EMAIL_USER");
+const EMAIL_PASS = defineSecret("EMAIL_PASS");
 
 function toTitleCase(str) {
   return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
@@ -105,5 +110,49 @@ export const cleanupOldJobs = onSchedule(
       logger.info(`cleanupOldJobs: deleted ${docSnap.id} (${fileName || "no file"})`);
     }
     logger.info(`cleanupOldJobs: removed ${deleted} job(s) older than 30 days`);
+  }
+);
+
+// Email the requester when their job is marked Completed (status → "done").
+export const notifyOnComplete = onDocumentUpdated(
+  {
+    document: "jobs/{jobId}",
+    region: "asia-southeast1",
+    secrets: [EMAIL_USER, EMAIL_PASS],
+  },
+  async (event) => {
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
+    if (!before || !after) return;
+    // Only fire on the transition INTO "done" (not edits of an already-done job).
+    if (before.status === "done" || after.status !== "done") return;
+
+    const to = after.ownerEmail;
+    if (!to) return;
+
+    const is3D = after.type === "3D Printing";
+    const subject = is3D
+      ? "Your 3D print has been completed"
+      : "Your laser cut has been completed";
+    const text = is3D
+      ? "Good news! Your 3D print job has finished and is ready for collection."
+      : "Good news! Your laser cutting job has finished and is ready for collection.";
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: EMAIL_USER.value(), pass: EMAIL_PASS.value() },
+    });
+
+    try {
+      await transporter.sendMail({
+        from: `Workshop Queue <${EMAIL_USER.value()}>`,
+        to,
+        subject,
+        text,
+      });
+      logger.info(`notifyOnComplete: emailed ${to} (${after.type})`);
+    } catch (err) {
+      logger.error("notifyOnComplete: email failed", err);
+    }
   }
 );
