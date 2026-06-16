@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { ACCEPTED_EXTENSIONS, MAX_FILE_MB, typeForFile } from "../config";
+import { ACCEPTED_EXTENSIONS, MAX_FILE_MB, typeForFile, firstName, TYPE_FILE_LABEL } from "../config";
+
+const ACTIVE_STATUSES = ["queued", "in_progress", "rejected"];
 
 export default function JoinForm({ user }) {
   const [busy, setBusy] = useState(false);
@@ -34,14 +36,29 @@ export default function JoinForm({ user }) {
 
     setBusy(true);
     try {
+      // Build a friendly name: "<label> - <preferred name>.<ext>", numbered
+      // ("<label> job 2 - …") if this student already has active jobs of this
+      // type in the queue. Completed jobs don't count.
+      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      const label = TYPE_FILE_LABEL[type] || type;
+      const name = firstName(user.displayName || user.email);
+      const ownSnap = await getDocs(
+        query(collection(db, "jobs"), where("ownerUid", "==", user.uid))
+      );
+      const existing = ownSnap.docs
+        .map((d) => d.data())
+        .filter((j) => j.type === type && ACTIVE_STATUSES.includes(j.status)).length;
+      const n = existing + 1;
+      const friendlyName = (n === 1 ? `${label} - ${name}` : `${label} job ${n} - ${name}`) + ext;
+
       // 1) Upload the file to Cloud Storage under this user's folder.
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const safeName = friendlyName.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `uploads/${user.uid}/${Date.now()}_${safeName}`;
       // contentDisposition "attachment" makes the admin's download button save
-      // the file to disk (with its original name) instead of opening it in a tab.
+      // the file to disk (with the friendly name) instead of opening it in a tab.
       await uploadBytes(ref(storage, path), file, {
         contentType: file.type || "application/octet-stream",
-        contentDisposition: `attachment; filename="${safeName}"`,
+        contentDisposition: `attachment; filename="${friendlyName}"`,
       });
 
       // 2) Create the queue entry in Firestore that points at the file.
@@ -51,7 +68,7 @@ export default function JoinForm({ user }) {
         ownerName: user.displayName || user.email,
         type, // auto-detected from the extension
         notes: "", // students can add notes from the queue afterwards
-        fileName: file.name,
+        fileName: friendlyName,
         filePath: path,
         status: "queued",
         createdAt: serverTimestamp(),

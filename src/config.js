@@ -19,6 +19,12 @@ export const TYPE_BY_EXTENSION = {
   ".svg": "Laser Cutting",
 };
 
+// Short labels used when auto-renaming uploaded files.
+export const TYPE_FILE_LABEL = {
+  "3D Printing": "3D print",
+  "Laser Cutting": "Laser cut",
+};
+
 // Display order of the two queues.
 export const JOB_TYPES = ["3D Printing", "Laser Cutting"];
 export const ACCEPTED_EXTENSIONS = Object.keys(TYPE_BY_EXTENSION);
