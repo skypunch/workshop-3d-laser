@@ -5,12 +5,23 @@ import { db, storage } from "../firebase";
 import {
   ACCEPTED_EXTENSIONS,
   MAX_FILE_MB,
+  SCHOOL_DOMAIN,
   typeForFile,
   firstName,
   isAdminEmail,
   TYPE_FILE_LABEL,
   TYPE_COUNTER_FIELD,
 } from "../config";
+
+// Staff have "firstname.lastname@<domain>" emails (letters only, single dot).
+// Returns the capitalised last name if it looks like a staff address, else null.
+function staffLastName(email) {
+  const [local, domain] = (email || "").toLowerCase().split("@");
+  if (!domain || domain !== SCHOOL_DOMAIN.toLowerCase()) return null;
+  const parts = local.split(".");
+  if (parts.length !== 2 || !/^[a-z]+$/.test(parts[0]) || !/^[a-z]+$/.test(parts[1])) return null;
+  return parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+}
 
 export default function JoinForm({ user }) {
   const [busy, setBusy] = useState(false);
@@ -49,8 +60,13 @@ export default function JoinForm({ user }) {
       const label = TYPE_FILE_LABEL[type] || type;
 
       let friendlyName;
+      const staffLast = isAdminEmail(user.email) ? null : staffLastName(user.email);
       if (isAdminEmail(user.email)) {
         friendlyName = `${label} job - Mr Wetherell${ext}`;
+      } else if (staffLast) {
+        // Staff member. Gender isn't available from sign-in, so use the
+        // "Staff member:" prefix rather than Mr/Ms. No counter/number.
+        friendlyName = `${label} job - Staff member: ${staffLast}${ext}`;
       } else {
         const name = firstName(user.displayName || user.email);
         // Lifetime per-student, per-type job number — persists across completions
