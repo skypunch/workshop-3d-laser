@@ -148,7 +148,6 @@ function QueueRow({ job, label, position, mine }) {
         </span>
         <div className="grow">
           <div className="line1">
-            <strong>{label}</strong>
             <span className="muted small filename">{job.fileName}</span>
             {job.status === "in_progress" && (
               <span className="status status-in_progress">{STATUS_LABELS.in_progress}</span>
