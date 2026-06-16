@@ -188,6 +188,8 @@ body {
 .queue-row.mine { border-color: var(--primary); }
 .row-main { display: flex; align-items: center; gap: 14px; }
 .queue-row .pos { font-weight: 700; color: var(--muted); min-width: 36px; }
+.done-check { color: var(--success); display: inline-flex; align-items: center; }
+.done-check svg { width: 18px; height: 18px; }
 .queue-row .grow, .grow { flex: 1; min-width: 0; }
 .line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 /* Fixed-width name column so the filenames line up vertically across rows. */

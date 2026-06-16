@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query,
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
-import { TrashIcon, WarningIcon, NukeIcon } from "./icons.jsx";
+import { TrashIcon, WarningIcon, NukeIcon, CheckIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
 
@@ -336,6 +336,10 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
             `#${position}`
           ) : job.status === "in_progress" ? (
             "▶"
+          ) : job.status === "done" ? (
+            <span className="done-check" aria-label="Completed">
+              <CheckIcon />
+            </span>
           ) : (
             "—"
           )}
@@ -345,9 +349,6 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
             <button className="btn ghost small file-link" onClick={() => onDownload(job)} title="Download file">
               ⬇ {job.fileName}
             </button>
-            {job.status === "done" && (
-              <span className="status status-done">{STATUS_LABELS.done}</span>
-            )}
           </div>
         </div>
         <div className="row-actions">
