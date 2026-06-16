@@ -95,3 +95,19 @@ export function isSchoolEmail(email) {
 export function isAdminEmail(email) {
   return typeof email === "string" && ADMIN_EMAILS.map((e) => e.toLowerCase()).includes(email.toLowerCase());
 }
+
+// Staff have "firstname.lastname@<SCHOOL_DOMAIN>" emails (letters only, one dot).
+// Returns "Firstname Lastname" (derived from the email) if it looks like a staff
+// address, else null. Note: the admin address also matches this shape.
+export function staffName(email) {
+  const [local, domain] = (email || "").toLowerCase().split("@");
+  if (!domain || domain !== SCHOOL_DOMAIN.toLowerCase()) return null;
+  const parts = local.split(".");
+  if (parts.length !== 2 || !/^[a-z]+$/.test(parts[0]) || !/^[a-z]+$/.test(parts[1])) return null;
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  return `${cap(parts[0])} ${cap(parts[1])}`;
+}
+
+export function isStaffEmail(email) {
+  return staffName(email) !== null;
+}

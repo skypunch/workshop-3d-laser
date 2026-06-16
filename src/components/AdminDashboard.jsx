@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs } from "../config";
+import { JOB_TYPES, STATUSES, STATUS_LABELS, labelJobs, isStaffEmail } from "../config";
 import { TrashIcon, WarningIcon, NukeIcon, CheckIcon } from "./icons.jsx";
 import FinishedGroup from "./FinishedGroup.jsx";
 import ColoursBox from "./ColoursBox.jsx";
@@ -393,7 +393,9 @@ function AdminRow({ job, label, position, batchMode, selected, onToggleSelect, o
         </div>
       </div>
 
-      <div className="owner-name muted">{job.ownerName}</div>
+      <div className={`owner-name muted${isStaffEmail(job.ownerEmail) ? " staff-name" : ""}`}>
+        {job.ownerName}
+      </div>
 
       {teacherOpen && (
         <div className="teacher-panel">

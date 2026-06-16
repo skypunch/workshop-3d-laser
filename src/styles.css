@@ -198,6 +198,8 @@ body {
 /* Smaller owner name, on its own line under the main row (indented past the
    position column so it sits under the name). Negative margin tucks it close. */
 .owner-name { font-size: 10px; line-height: 1.3; margin-top: -6px; padding-left: 50px; }
+/* Staff jobs: highlight the name in light purple. */
+.owner-name.staff-name { color: #c4a7ff; }
 
 .tag {
   font-size: 11px; background: var(--card); border: 1px solid var(--border);
