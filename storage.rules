@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// These rules govern the uploaded job files (.stl / .3mf / .svg).
+// These rules govern the uploaded job files (.stl / .3mf / .obj / .svg).
 service firebase.storage {
   match /b/{bucket}/o {
 

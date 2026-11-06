@@ -29,7 +29,7 @@ export default function JoinForm({ user }) {
     setError("");
     setDoneMsg("");
 
-    const type = typeForFile(file.name); // .stl/.3mf → 3D Printing, .svg → Laser Cutting
+    const type = typeForFile(file.name); // .stl/.3mf/.obj → 3D Printing, .svg → Laser Cutting
     if (!type) {
       setError(`File must be one of: ${ACCEPTED_EXTENSIONS.join(", ")}`);
       clearInput();

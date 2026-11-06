@@ -17,6 +17,7 @@ export const ADMIN_EMAILS = ["marcus.wetherell@etonhouse.edu.sg"];
 export const TYPE_BY_EXTENSION = {
   ".stl": "3D Printing",
   ".3mf": "3D Printing",
+  ".obj": "3D Printing",
   ".svg": "Laser Cutting",
 };
 
