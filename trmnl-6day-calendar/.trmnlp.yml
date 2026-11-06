@@ -1,0 +1,64 @@
+# trmnlp local preview config + mock data, so you can render the plugin without
+# a device. Mirrors TRMNL's parsed Google Calendar output (Plugin Merge), exposed
+# as `data.events`. The dev clock is "now", so the six-day grid starts on today.
+#
+# Usage (see ../README.md "Local preview"):
+#   cd preview && trmnlp serve   # http://localhost:4567
+# The templates are symlinked under preview/src/ -> ../.. so edits are live.
+watch:
+  - src
+  - .trmnlp.yml
+
+time_zone: Asia/Singapore
+
+variables:
+  trmnl:
+    user:
+      name: Marcus
+      utc_offset: 28800      # Singapore, UTC+8 (no DST) -- matches the device
+      time_zone_iana: Asia/Singapore
+      locale: en-SG
+  # Representative family calendar: mostly ALL-DAY events with the time written
+  # into the title (so no time label shows), plus one genuinely timed event.
+  # Node name mirrors the real merge variable (Marcus's Google Calendar instance).
+  google_calendar_14059:
+    events:
+      # Today (2026-06-27)
+      - { summary: "9am Leo football match",   start: "", end: "", all_day: true,  date_time: "2026-07-27T00:00:00" }
+      - { summary: "6pm Dinner at Grandma's",  start: "", end: "", all_day: true,  date_time: "2026-07-27T00:00:00" }
+      # 2026-06-28 (long title to verify full text scales to fit, no cutoff)
+      - { summary: "10am Church then community bake sale fundraiser at the village hall",  start: "", end: "", all_day: true,  date_time: "2026-07-28T00:00:00" }
+      # 2026-06-29 (name-bolding test)
+      - { summary: "Marcus dermatologist appointment 4pm", start: "", end: "", all_day: true,  date_time: "2026-07-29T00:00:00" }
+      # 2026-06-30 intentionally empty (tests the "no events" placeholder)
+      # 2026-07-01 (name-bolding test: two names in one title)
+      - { summary: "Wade & Wesley football",   start: "", end: "", all_day: true,  date_time: "2026-07-31T00:00:00" }
+      - { summary: "Shahidah piano 6:30pm",    start: "", end: "", all_day: true,  date_time: "2026-07-31T00:00:00" }
+      # 2026-07-02: a genuinely timed event -> still shows its time label
+      - { summary: "Parents' evening",         start: "6:00pm", end: "7:30pm", all_day: false, date_time: "2026-08-01T18:00:00" }
+
+  # Info panel: last 5 items added to Plex (sampled from the real library via
+  # Tautulli). `show` is the series name for episodes -- omit for films.
+  # Weather: mirrors Open-Meteo's real response shape (West Singapore), served by
+  # polling plugin 396837. Root-level here; the template also handles the
+  # merge_variables-nested shape.
+  private_plugin_396837:
+    current:
+      time: "2026-07-27T15:15"   # poll time; deliberately off the hour to prove the label
+      uv_index: 6.0
+    hourly:
+      time: ["2026-07-27T15:00", "2026-07-27T16:00"]
+      precipitation_probability: [65, 71]
+
+  # Mirrors the live shape exactly: TRMNL nests a webhook plugin's posted payload
+  # under `merge_variables`, so the array is at .merge_variables.recent
+  private_plugin_396781:
+    merge_variables:
+      recent:
+        - { title: "Curiouser and Curiouser", show: "Rick and Morty", season: "1", episode: "3", kind: "episode", added: "1785122406" }
+        # bulk add: Plex reports a whole season as ONE season entry
+        - { title: "Season 1", show: "Stewart Lee's Comedy Vehicle", season: "1", episode: "", kind: "season", added: "1785094685" }
+        - { title: "Deepthroat", show: "Life, Larry and the Pursuit of Unhappiness", season: "2", episode: "11", kind: "episode", added: "1784942946" }
+        - { title: "Whatever You Do, Don't Go Home", show: "Silo", season: "10", episode: "7", kind: "episode", added: "1784857386" }
+        # film: no show/season/episode -> keeps its title
+        - { title: "The Devil Wears Prada 2", show: "", season: "", episode: "", kind: "movie", added: "1784648857" }

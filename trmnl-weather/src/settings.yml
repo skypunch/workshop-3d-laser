@@ -1,0 +1,14 @@
+---
+strategy: polling
+no_screen_padding: 'no'
+dark_mode: 'no'
+static_data: ''
+polling_verb: get
+framework_version: 3.1.8
+serverless_language: ''
+polling_url: https://api.open-meteo.com/v1/forecast?latitude=1.3590&longitude=103.7637&current=uv_index&hourly=precipitation_probability&forecast_hours=2&timezone=Asia%2FSingapore
+polling_headers: ''
+polling_body: ''
+id: 396837
+name: Weather
+refresh_interval: 15

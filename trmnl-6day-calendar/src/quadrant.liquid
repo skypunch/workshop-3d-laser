@@ -1,0 +1,39 @@
+{% comment %} 6-Day Calendar -- QUADRANT. Today's agenda only. Plugin Merge strategy. {% endcomment %}
+{% assign events = google_calendar_14059.events %}{% comment %} this node = TRMNL's native Google Calendar plugin instance {% endcomment %}
+{% assign TZ_FIX = 0 %}{% comment %} set to trmnl.user.utc_offset if days are off {% endcomment %}
+{% assign now_epoch = "now" | date: "%s" | plus: trmnl.user.utc_offset %}
+{% assign day_str = now_epoch | date: "%Y-%m-%d" %}
+
+<style>
+  @font-face { font-family: 'ChicagoFLF'; src: url('https://cdn.jsdelivr.net/npm/chicago.css@1.0.3/ChicagoFLF.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+  .view, .view * { font-family: 'ChicagoFLF', 'Chicago', Helvetica, sans-serif; }
+  .nm { display:inline-block; border:2px solid currentColor; border-radius:3px; padding:0 4px; line-height:1.05; }
+</style>
+
+<div class="view view--quadrant">
+  <div class="layout">
+    <div style="border:2px solid black; display:flex; flex-direction:column; overflow:hidden; height:100%; min-height:0;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; padding:2px 5px; background:black; color:white;">
+        <span style="font-weight:normal; font-size:14px;">{{ now_epoch | date: "%A" }}</span>
+        <span style="font-size:11px;">{{ now_epoch | date: "%-d %b" }}</span>
+      </div>
+      <div style="padding:3px 5px; flex:1; overflow:hidden; min-height:0;">
+        {% assign shown = 0 %}
+        {% for event in events %}
+          {% assign ev_date = event.date_time | date: "%s" | plus: TZ_FIX | date: "%Y-%m-%d" %}
+          {% if ev_date == day_str %}
+            {% if shown < 4 %}
+              <div style="margin-bottom:2px; line-height:1.1;">
+                {% unless event.all_day %}<span style="font-size:11px; font-weight:normal;">{{ event.start }}</span>{% endunless %}
+                <span style="font-size:12px;"> {{ event.summary | default: "(busy)" | truncate: 22 | replace: "Shahidah", "<span class='nm'>Shahidah</span>" | replace: "Marcus", "<span class='nm'>Marcus</span>" | replace: "Wade", "<span class='nm'>Wade</span>" | replace: "Wesley", "<span class='nm'>Wesley</span>" }}</span>
+              </div>
+            {% endif %}
+            {% assign shown = shown | plus: 1 %}
+          {% endif %}
+        {% endfor %}
+        {% if shown == 0 %}<span style="font-size:12px; opacity:0.45;">Nothing today</span>{% endif %}
+        {% if shown > 4 %}{% assign more = shown | minus: 4 %}<span style="font-size:11px; font-weight:normal;">+{{ more }} more</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>

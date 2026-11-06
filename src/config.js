@@ -16,6 +16,7 @@ export const ADMIN_EMAILS = ["marcus.wetherell@etonhouse.edu.sg"];
 // Which queue a file goes into is decided by its extension.
 export const TYPE_BY_EXTENSION = {
   ".stl": "3D Printing",
+  ".3mf": "3D Printing",
   ".svg": "Laser Cutting",
 };
 

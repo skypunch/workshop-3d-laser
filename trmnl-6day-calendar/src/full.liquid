@@ -1,0 +1,209 @@
+{% comment %}
+  6-Day Calendar -- FULL view (approx 800x480, 1-bit e-ink).
+  Six days in a 2x3 grid, today always top-left.
+
+  STRATEGY: "Plugin Merge" -- this reads the PARSED events from TRMNL's native
+  Google Calendar plugin (connected via OAuth), so your calendar stays private.
+
+  Each parsed event looks like:
+    { date_time: <localized timestamp>, summary: "Title",
+      start: "9:00am", end: "10:00am", all_day: false }
+
+  CONFIRM THESE TWO LINES from the "Variables" panel on first preview:
+   1) The events array node. It may show as `data.events`, or as
+      `google_calendar_<id>.events` for your specific instance. Set it
+      once here (the next line):
+{% endcomment %}
+{% assign events = google_calendar_14059.events %}
+{% comment %}
+   2) If events land on the wrong day near midnight, date_time isn't local;
+      set TZ_FIX to trmnl.user.utc_offset instead of 0 (seconds).
+{% endcomment %}
+{% assign TZ_FIX = 0 %}
+
+{% comment %} Info panel data: last 5 items added to Plex. Pushed by
+   scripts/tautulli_to_trmnl.py into the "Plex Recently Added" webhook plugin
+   (id 396781), which surfaces here as private_plugin_396781. {% endcomment %}
+{% comment %} Note the merge_variables level: TRMNL nests a webhook plugin's
+   posted payload under it, so the array is NOT at private_plugin_396781.recent. {% endcomment %}
+{% assign plex_recent = private_plugin_396781.merge_variables.recent %}
+
+{% comment %} Weather: Open-Meteo JSON polled by private plugin 396837.
+   Webhook plugins nest their payload under merge_variables; polling plugins may
+   put it at the root -- so try the nested shape first and fall back. {% endcomment %}
+{% assign wx = private_plugin_396837.merge_variables %}
+{% if wx.hourly == blank %}{% assign wx = private_plugin_396837 %}{% endif %}
+{% comment %} Rain = the higher of this hour and the next, so a spike either side
+   of the hour boundary still shows up. {% endcomment %}
+{% assign wx_p0 = wx.hourly.precipitation_probability[0] %}
+{% assign wx_p1 = wx.hourly.precipitation_probability[1] %}
+{% assign wx_rain = wx_p0 %}
+{% if wx_p1 > wx_rain %}{% assign wx_rain = wx_p1 %}{% endif %}
+{% assign wx_uv = wx.current.uv_index %}
+
+{% assign now_epoch = "now" | date: "%s" | plus: trmnl.user.utc_offset %}
+
+{% comment %} Display font: ChicagoFLF -- public-domain revival of the original
+   1984 Mac system font (Susan Kare). Self-hosted via jsDelivr (CORS-friendly). {% endcomment %}
+<style>
+  @font-face {
+    font-family: 'ChicagoFLF';
+    src: url('https://cdn.jsdelivr.net/npm/chicago.css@1.0.3/ChicagoFLF.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+  .view, .view * { font-family: 'ChicagoFLF', 'Chicago', Helvetica, sans-serif; }
+  /* boxed emphasis for family names */
+  .nm { display:inline-block; border:2px solid currentColor; border-radius:3px; padding:0 4px; line-height:1.05; }
+</style>
+
+<div class="view view--full">
+  <div class="layout">
+    <div class="grid grid--cols-3" style="gap:6px; height:100%; grid-template-rows:1fr 1fr;">
+      {% comment %} Left two columns: the next four days. Right column is the
+         info stack -- Weather (top) and Plex (bottom), placed explicitly below. {% endcomment %}
+      {% for i in (0..3) %}
+        {% assign offset_secs = i | times: 86400 %}
+        {% assign day_epoch = now_epoch | plus: offset_secs %}
+        {% assign day_str = day_epoch | date: "%Y-%m-%d" %}
+        {% assign gcol = i | modulo: 2 | plus: 1 %}
+        {% assign grow = i | divided_by: 2 | plus: 1 %}
+
+        <div style="grid-column:{{ gcol }}; grid-row:{{ grow }}; border:2px solid black; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+
+          {% comment %} Day header -- today is inverted (black fill) to stand out {% endcomment %}
+          <div style="display:flex; justify-content:space-between; align-items:baseline; padding:3px 6px; {% if i == 0 %}background:black; color:white;{% else %}border-bottom:1px solid black;{% endif %}">
+            <span style="font-weight:normal; font-size:24px;">
+              {{ day_epoch | date: "%A" }}
+            </span>
+            <span style="font-size:18px;">{{ day_epoch | date: "%-d %b" }}</span>
+          </div>
+
+          {% comment %} Events for this day. Child font sizes are in em; the
+             fit-to-box script at the bottom sets each cell's base font-size to
+             the largest value that still fits the empty space. {% endcomment %}
+          <div class="day-events" style="padding:4px 6px; flex:1; overflow:hidden; min-height:0;">
+            {% assign shown = 0 %}
+            {% for event in events %}
+              {% assign ev_date = event.date_time | date: "%s" | plus: TZ_FIX | date: "%Y-%m-%d" %}
+              {% if ev_date == day_str %}
+                {% if shown < 4 %}
+                  <div class="event" style="margin-bottom:0.3em; line-height:1.1;">
+                    {% unless event.all_day %}<span style="font-size:1em; font-weight:normal;">{{ event.start }}</span>{% endunless %}
+                    <span style="font-size:1em; display:block; overflow-wrap:normal; word-break:normal;">{{ event.summary | default: "(busy)" | replace: "Shahidah", "<span class='nm'>Shahidah</span>" | replace: "Marcus", "<span class='nm'>Marcus</span>" | replace: "Wade", "<span class='nm'>Wade</span>" | replace: "Wesley", "<span class='nm'>Wesley</span>" }}</span>
+                  </div>
+                {% endif %}
+                {% assign shown = shown | plus: 1 %}
+              {% endif %}
+            {% endfor %}
+
+            {% if shown == 0 %}
+              <span style="font-size:13px; opacity:0.45;">&mdash;</span>
+            {% endif %}
+            {% if shown > 4 %}
+              {% assign more = shown | minus: 4 %}
+              <span class="event" style="font-size:0.72em; font-weight:normal;">+{{ more }} more</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+
+      {% comment %} Top-right: weather. Rain chance for the coming hour + current UV. {% endcomment %}
+      <div style="grid-column:3; grid-row:1; border:2px solid black; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:3px 6px; border-bottom:1px solid black;">
+          {% comment %} Label with current.time -- when the data was pulled. Open-Meteo
+             steps this in 15-minute increments, matching our polling interval. Times
+             arrive as "YYYY-MM-DDTHH:MM" already in Asia/Singapore (the polling URL
+             sets the timezone), so slice the 24h clock out rather than re-parsing and
+             risking a timezone shift. {% endcomment %}
+          <span style="font-weight:normal; font-size:24px;">Weather</span>
+          <span style="font-size:18px;">{{ wx.current.time | slice: 11, 5 }}</span>
+        </div>
+        <div class="day-events" style="padding:4px 6px; flex:1; overflow:hidden; min-height:0;">
+          {% if wx_rain != blank or wx_uv != blank %}
+            <div class="event" style="margin-bottom:0.3em; line-height:1.1;">
+              <span style="font-size:0.72em; font-weight:normal;">Rain</span>
+              <span style="font-size:1em; display:block;">{{ wx_rain | default: "--" }}%</span>
+            </div>
+            <div class="event" style="margin-bottom:0.3em; line-height:1.1;">
+              <span style="font-size:0.72em; font-weight:normal;">UV index</span>
+              <span style="font-size:1em; display:block;">{{ wx_uv | round | default: "--" }}</span>
+            </div>
+          {% else %}
+            <span style="font-size:13px; opacity:0.45;">&mdash;</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% comment %} Bottom-right: last items added to Plex. Same fit-to-box class
+         as the day cells, so text shrinks to fit. {% endcomment %}
+      <div style="grid-column:3; grid-row:2; border:2px solid black; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:3px 6px; border-bottom:1px solid black;">
+          {% comment %} Mirrors the day headers: name left at weekday size,
+             qualifier right at date size. {% endcomment %}
+          <span style="font-weight:normal; font-size:24px;">Plex</span>
+          <span style="font-size:18px;">Latest</span>
+        </div>
+        <div class="day-events" style="padding:4px 6px; flex:1; overflow:hidden; min-height:0;">
+          {% assign plex_shown = 0 %}
+          {% for item in plex_recent %}
+            {% if plex_shown < 3 %}
+              <div class="event" style="margin-bottom:0.3em; line-height:1.1;">
+                {% comment %} Episodes -> "Series: S01 E03". A bulk season add arrives
+                   as one season entry -> "Series: Season 1". Films/new shows keep
+                   their title. Zero-pad via prepend+slice (Liquid has no printf). {% endcomment %}
+                {% assign ep_label = item.title %}
+                {% if item.season != blank and item.episode != blank %}
+                  {% assign s_pad = item.season | prepend: "0" | slice: -2, 2 %}
+                  {% assign e_pad = item.episode | prepend: "0" | slice: -2, 2 %}
+                  {% assign ep_label = "S" | append: s_pad | append: " E" | append: e_pad %}
+                {% elsif item.kind == "season" and item.season != blank %}
+                  {% assign ep_label = "Season " | append: item.season %}
+                {% endif %}
+                <span style="font-size:1em; display:block; overflow-wrap:normal; word-break:normal;">{% if item.show != blank %}{{ item.show }}: {% endif %}{{ ep_label }}</span>
+              </div>
+            {% endif %}
+            {% assign plex_shown = plex_shown | plus: 1 %}
+          {% endfor %}
+          {% if plex_shown == 0 %}
+            <span style="font-size:13px; opacity:0.45;">&mdash;</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% comment %} Fixed size (BASE px) for event text; only shrink a cell's text if
+   its events don't fit at that size. Requires JavaScript, which TRMNL runs. {% endcomment %}
+<script>
+  (function () {
+    var BASE = 24, MIN = 7;   // try 24px; never go below 7px
+    function fits(el) {
+      return el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth;
+    }
+    function fit() {
+      document.querySelectorAll('.day-events').forEach(function (el) {
+        if (!el.querySelectorAll('.event').length) return;   // empty day: leave small
+        el.style.fontSize = BASE + 'px';
+        if (fits(el)) return;                                 // fits at fixed size -> done
+        // Too many words/events: shrink to the largest size that fits.
+        var lo = MIN, hi = BASE, best = MIN;
+        for (var i = 0; i < 14; i++) {
+          var mid = (lo + hi) / 2;
+          el.style.fontSize = mid + 'px';
+          if (fits(el)) { best = mid; lo = mid; } else { hi = mid; }
+        }
+        el.style.fontSize = (best * 0.96) + 'px';   // small safety margin so it never clips
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fit);
+    } else {
+      fit();
+    }
+    // Re-fit once the web font loads, since text metrics change with the real font.
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fit); }
+  })();
+</script>

@@ -1,0 +1,46 @@
+{% comment %} 6-Day Calendar -- HALF VERTICAL. Today + tomorrow, stacked. Plugin Merge strategy. {% endcomment %}
+{% assign events = google_calendar_14059.events %}{% comment %} this node = TRMNL's native Google Calendar plugin instance {% endcomment %}
+{% assign TZ_FIX = 0 %}{% comment %} set to trmnl.user.utc_offset if days are off {% endcomment %}
+{% assign now_epoch = "now" | date: "%s" | plus: trmnl.user.utc_offset %}
+
+<style>
+  @font-face { font-family: 'ChicagoFLF'; src: url('https://cdn.jsdelivr.net/npm/chicago.css@1.0.3/ChicagoFLF.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+  .view, .view * { font-family: 'ChicagoFLF', 'Chicago', Helvetica, sans-serif; }
+  .nm { display:inline-block; border:2px solid currentColor; border-radius:3px; padding:0 4px; line-height:1.05; }
+</style>
+
+<div class="view view--half_vertical">
+  <div class="layout">
+    <div class="grid grid--cols-1" style="gap:6px; height:100%;">
+      {% for i in (0..1) %}
+        {% assign offset_secs = i | times: 86400 %}
+        {% assign day_epoch = now_epoch | plus: offset_secs %}
+        {% assign day_str = day_epoch | date: "%Y-%m-%d" %}
+
+        <div style="border:2px solid black; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; padding:3px 6px; {% if i == 0 %}background:black; color:white;{% else %}border-bottom:1px solid black;{% endif %}">
+            <span style="font-weight:normal; font-size:16px;">{{ day_epoch | date: "%A" }}</span>
+            <span style="font-size:13px;">{{ day_epoch | date: "%-d %b" }}</span>
+          </div>
+          <div style="padding:4px 6px; flex:1; overflow:hidden; min-height:0;">
+            {% assign shown = 0 %}
+            {% for event in events %}
+              {% assign ev_date = event.date_time | date: "%s" | plus: TZ_FIX | date: "%Y-%m-%d" %}
+              {% if ev_date == day_str %}
+                {% if shown < 5 %}
+                  <div style="margin-bottom:3px; line-height:1.15;">
+                    {% unless event.all_day %}<span style="font-size:12px; font-weight:normal;">{{ event.start }}</span>{% endunless %}
+                    <span style="font-size:14px; display:block;">{{ event.summary | default: "(busy)" | truncate: 30 | replace: "Shahidah", "<span class='nm'>Shahidah</span>" | replace: "Marcus", "<span class='nm'>Marcus</span>" | replace: "Wade", "<span class='nm'>Wade</span>" | replace: "Wesley", "<span class='nm'>Wesley</span>" }}</span>
+                  </div>
+                {% endif %}
+                {% assign shown = shown | plus: 1 %}
+              {% endif %}
+            {% endfor %}
+            {% if shown == 0 %}<span style="font-size:13px; opacity:0.45;">&mdash;</span>{% endif %}
+            {% if shown > 5 %}{% assign more = shown | minus: 5 %}<span style="font-size:12px; font-weight:normal;">+{{ more }} more</span>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
